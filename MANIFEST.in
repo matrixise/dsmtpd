@@ -1,0 +1,5 @@
+include README.rst AUTHORS requirements.txt
+recursive-include dsmtpd *.py
+recursive-exclude dsmtpd *.pyc
+recursive-exclude dsmtpd *.pyo
+prune dist
