@@ -8,7 +8,7 @@ Usage
 
 ::
     
-    $ dsmtpd --port 1025 --host 127.0.0.1
+    $ dsmtpd -p 1025 -i 127.0.0.1
     2013-01-13 14:00:07,346 INFO: Starting SMTP server at 127.0.0.1:1025
 
 
@@ -30,8 +30,8 @@ Execute dsmtpd with the --help flag and you will get the usage of this command::
 
 There are two options:
 
-* --port You specify the port of dsmtpd (default is 1025)
-* --iface You specify the network interface (default is loopback, 127.0.0.1)
+* -p You specify the port of dsmtpd (default is 1025)
+* -i You specify the network interface (default is loopback, 127.0.0.1)
 
 Use it
 ------
