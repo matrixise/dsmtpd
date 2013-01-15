@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 """
 Usage:
-    dsmtpd [-i <iface>] [-p <port>]
+    dsmtpd [-i <iface>] [-p <port>] [-d <directory>]
 
 Options:
     -p <port>      Specify the port for the SMTP server [default: 1025]
     -i <iface>     Specify the interface [default: 127.0.0.1]
+    -d <directory> Specify the directory to save the incoming emails
     -h --help
     --version
 """
-import sys
-import smtpd
 import asyncore
-import logging
+import contextlib
 import email.message
 import email.parser
+import email.utils
+import logging
+import mailbox
+import smtpd
+import sys
+import collections
 
 import docopt
 
@@ -23,10 +28,26 @@ from dsmtpd import __name__
 
 LOGGERNAME = 'dsmtpd'
 
+Config = collections.namedtuple('Config', 'interface port maildir')
+
 log = logging.getLogger(LOGGERNAME)
+
+@contextlib.contextmanager
+def create_maildir(maildir):
+    mbox = mailbox.Maildir(maildir)
+    try:
+        mbox.lock()
+        yield mbox
+
+    finally:
+        mbox.unlock()
 
 
 class DebugServer(smtpd.DebuggingServer):
+    def __init__(self, config, *args, **kwargs):
+        self.config = config
+        smtpd.DebuggingServer.__init__(self, (self.config.interface, self.config.port), None)
+
     def process_message(self, peer, mailfrom, rcpttos, data):
         headers = email.parser.Parser().parsestr(data)
         values = {
@@ -37,16 +58,20 @@ class DebugServer(smtpd.DebuggingServer):
         }
         log.info('%(peer)s: %(mailfrom)s -> %(rcpttos)s [%(subject)s]', values)
 
+        if self.config.maildir:
+            with create_maildir(self.config.maildir) as mbox:
+                mbox.add(mailbox.mboxMessage(data))
+
 
 def main():
     logging.basicConfig(format='%(asctime)-15s %(levelname)s: %(message)s',
                         level=logging.INFO)
     opts = docopt.docopt(__doc__, version=__version__)
 
-    address, port = (opts['-i'], int(opts['-p']),)
+    config = Config(opts['-i'], int(opts['-p']), opts['-d'])
 
-    log.info('Starting {0} {1} at {2}:{3}'.format(__name__, __version__, address, port))
-    DebugServer((address, port), None)
+    log.info('Starting {0} {1} at {2}:{3}'.format(__name__, __version__, config.interface, config.port))
+    DebugServer(config)
     try:
         asyncore.loop()
     except KeyboardInterrupt:
