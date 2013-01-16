@@ -3,8 +3,8 @@
     setup.py
     ~~~~~~~~
 
-    :copyright: (c) 2013 by Stephane Wirtel
-    :license: BSD
+    :copyright: (c) 2013 by Stephane Wirtel <stephane@wirtel.be>
+    :license: BSD, see LICENSE for more details
 """
 import os
 from setuptools import setup

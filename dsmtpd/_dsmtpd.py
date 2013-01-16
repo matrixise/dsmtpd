@@ -1,5 +1,15 @@
 #!/usr/bin/env python
 """
+    dsmtpd/_dsmtpd.py
+    ~~~~~~~~~~~~~~~~~
+
+    :copyright: (c) 2013 by Stephane Wirtel <stephane@wirtel.be>
+    :license: BSD, see LICENSE for more details
+"""
+
+DOCOPT = """
+dsmtpd: A small SMTP server for the smart developer
+
 Usage:
     dsmtpd [-i <iface>] [-p <port>] [-d <directory>]
 
@@ -66,7 +76,7 @@ class DebugServer(smtpd.DebuggingServer):
 def main():
     logging.basicConfig(format='%(asctime)-15s %(levelname)s: %(message)s',
                         level=logging.INFO)
-    opts = docopt.docopt(__doc__, version=__version__)
+    opts = docopt.docopt(DOCOPT, version=__version__)
 
     config = Config(opts['-i'], int(opts['-p']), opts['-d'])
 
