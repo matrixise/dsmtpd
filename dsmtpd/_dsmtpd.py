@@ -80,9 +80,12 @@ def main():
 
     config = Config(opts['-i'], int(opts['-p']), opts['-d'])
 
-    log.info('Starting {0} {1} at {2}:{3}'.format(__name__, __version__, config.interface, config.port))
-    DebugServer(config)
     try:
+        DebugServer(config)
+        log.info('Starting {0} {1} at {2}:{3}'.format(__name__, __version__, config.interface, config.port))
+
+        if config.directory:
+            log.info('Store the incoming emails into {}'.format(config.directory))
         asyncore.loop()
     except KeyboardInterrupt:
         log.info('Cleaning up')
