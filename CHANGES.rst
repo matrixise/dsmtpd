@@ -3,10 +3,16 @@ dsmtpd Changelog
 
 Here you can see the full list of changes between each dsmtpd release.
 
-Version 0.2
+Version 0.3
 -----------
 
 Release date to be decided.
+
+
+Version 0.2
+-----------
+
+Release on January 21st 2013.
 
 - Allow to store the incoming emails in a maildir via the '-d' argument
 
