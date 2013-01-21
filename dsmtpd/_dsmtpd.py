@@ -38,7 +38,7 @@ from dsmtpd import __name__
 
 LOGGERNAME = 'dsmtpd'
 
-Config = collections.namedtuple('Config', 'interface port maildir')
+Config = collections.namedtuple('Config', 'interface port directory')
 
 log = logging.getLogger(LOGGERNAME)
 
@@ -68,8 +68,8 @@ class DebugServer(smtpd.DebuggingServer):
         }
         log.info('%(peer)s: %(mailfrom)s -> %(rcpttos)s [%(subject)s]', values)
 
-        if self.config.maildir:
-            with create_maildir(self.config.maildir) as mbox:
+        if self.config.directory:
+            with create_maildir(self.config.directory) as mbox:
                 mbox.add(mailbox.mboxMessage(data))
 
 
