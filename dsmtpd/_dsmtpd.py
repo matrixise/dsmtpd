@@ -22,6 +22,7 @@ Options:
 """
 import asyncore
 import contextlib
+from email import policy
 import email.message
 import email.parser
 import email.utils
@@ -58,8 +59,14 @@ class DebugServer(smtpd.DebuggingServer):
         self.config = config
         smtpd.DebuggingServer.__init__(self, (self.config.interface, self.config.port), None)
 
-    def process_message(self, peer, mailfrom, rcpttos, data):
-        headers = email.parser.Parser().parsestr(data)
+    def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
+        if isinstance(data, bytes):
+            headers = email.parser.BytesHeaderParser(policy=policy.compat32
+                      ).parsebytes(data)
+        else:
+             # in python 3.5 instance(data, str) is True -> we use the old code
+             headers = email.parser.Parser().parsestr(data)
+
         values = {
             'peer': ':'.join(map(str, peer)),
             'mailfrom': mailfrom,
