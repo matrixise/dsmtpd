@@ -55,6 +55,6 @@ setup(
     classifiers=classifiers,
     entry_points="""
     [console_scripts]
-    dsmtpd = dsmtpd._dsmtpd:main
+    dsmtpd = dsmtpd.__main__:main
     """
 )
