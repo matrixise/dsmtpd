@@ -31,7 +31,7 @@ Execute dsmtpd with the --help flag and you will get the usage of this command::
 
     dsmtpd --help
 
-There are two options:
+There are three options:
 
 * -p You specify the port of dsmtpd (default is 1025)
 * -i You specify the network interface (default is loopback, 127.0.0.1)
