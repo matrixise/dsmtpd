@@ -7,6 +7,6 @@
     :license: BSD, see LICENSE for more details
 """
 __name__ = "dsmtpd"
-__version__ = "0.3git"
-__author__ = ("Stephane Wirtel",)
+__version__ = "0.3"
+__author__ = "Stephane Wirtel"
 __author_email__ = "stephane@wirtel.be"
