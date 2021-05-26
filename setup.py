@@ -45,7 +45,6 @@ setup(
     long_description="\n".join([README, CHANGES]),
     author=__author__,
     author_email=__author_email__,
-    install_requires=requirements,
     packages=find_packages(),
     include_package_data=True,
     license="BSD",
