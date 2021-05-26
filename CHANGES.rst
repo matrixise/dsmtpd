@@ -3,10 +3,10 @@ dsmtpd Changelog
 
 Here you can see the full list of changes between each dsmtpd release.
 
-Version 0.3git
---------------
+Version 0.3
+-----------
 
-Release date to be decided.
+Release on May 26th 2021.
 
 - Maildir capture: added early check (patch by Bernhard E. Reiter)
 - Remove the support of Docopt
