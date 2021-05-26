@@ -18,9 +18,6 @@ from dsmtpd import __version__
 
 HERE = os.path.dirname(__file__)
 
-with open(os.path.join(HERE, "requirements.txt")) as fp:
-    requirements = fp.readlines()
-
 with open("README.rst") as f:
     README = f.read()
 
