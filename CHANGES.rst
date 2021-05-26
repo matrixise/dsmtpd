@@ -13,6 +13,9 @@ Release date to be decided.
 - Remove the support of Python 2.x (dead in 2020)
 - Support Python 3.6+
 - Improve the classifiers for PyPI
+- Migrate to PEP 517
+- Fix License into setup.py
+- Add tests for the CLI using argparse instead of docopt
 
 Version 0.2
 -----------
