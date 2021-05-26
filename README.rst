@@ -35,7 +35,7 @@ There are two options:
 
 * -p You specify the port of dsmtpd (default is 1025)
 * -i You specify the network interface (default is loopback, 127.0.0.1)
-* -d You specify the directory to save the incoming emails
+* -d You specify a Maildir directory to save the incoming emails
 
 Use it
 ------

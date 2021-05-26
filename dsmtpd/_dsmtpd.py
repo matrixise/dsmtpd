@@ -16,12 +16,13 @@ Usage:
 Options:
     -p <port>      Specify the port for the SMTP server [default: 1025]
     -i <iface>     Specify the interface [default: 127.0.0.1]
-    -d <directory> Specify the directory to save the incoming emails
+    -d <directory> Specify a Maildir directory to save the incoming emails
     -h --help
     --version
 """
 import asyncore
 import contextlib
+from email import policy
 import email.message
 import email.parser
 import email.utils
@@ -43,8 +44,8 @@ Config = collections.namedtuple('Config', 'interface port directory')
 log = logging.getLogger(LOGGERNAME)
 
 @contextlib.contextmanager
-def create_maildir(maildir):
-    mbox = mailbox.Maildir(maildir)
+def create_maildir(maildir, create=True):
+    mbox = mailbox.Maildir(maildir, create=create)
     try:
         mbox.lock()
         yield mbox
@@ -58,8 +59,14 @@ class DebugServer(smtpd.DebuggingServer):
         self.config = config
         smtpd.DebuggingServer.__init__(self, (self.config.interface, self.config.port), None)
 
-    def process_message(self, peer, mailfrom, rcpttos, data):
-        headers = email.parser.Parser().parsestr(data)
+    def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
+        if isinstance(data, bytes):
+            headers = email.parser.BytesHeaderParser(policy=policy.compat32
+                      ).parsebytes(data)
+        else:
+             # in python 3.5 instance(data, str) is True -> we use the old code
+             headers = email.parser.Parser().parsestr(data)
+
         values = {
             'peer': ':'.join(map(str, peer)),
             'mailfrom': mailfrom,
@@ -69,7 +76,7 @@ class DebugServer(smtpd.DebuggingServer):
         log.info('%(peer)s: %(mailfrom)s -> %(rcpttos)s [%(subject)s]', values)
 
         if self.config.directory:
-            with create_maildir(self.config.directory) as mbox:
+            with create_maildir(self.config.directory, create=False) as mbox:
                 mbox.add(mailbox.mboxMessage(data))
 
 
@@ -85,7 +92,18 @@ def main():
         log.info('Starting {0} {1} at {2}:{3}'.format(__name__, __version__, config.interface, config.port))
 
         if config.directory:
-            log.info('Store the incoming emails into {}'.format(config.directory))
+            try:
+                with create_maildir(config.directory) as maildir:
+                    if len(maildir) > 0:
+                        log.info('Found a Maildir storage with {} mails'.format(
+                                 len(maildir)))
+            except:
+                log.fatal('{} must be either non-existing (at a place where '
+                          'it can be created) or an existing Maildir '
+                          'storage'.format(config.directory))
+                raise
+
+            log.info('Storing the incoming emails into {}'.format(config.directory))
         asyncore.loop()
     except KeyboardInterrupt:
         log.info('Cleaning up')
