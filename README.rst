@@ -1,7 +1,7 @@
 dsmptd: A debugger SMTP server for Humans
 =========================================
 
-**This project is unmaintained and is archived**
+**This project is unmaintained but can received PRs**
 
 dsmtpd is a small tool to help the developer without an smtp server
 
