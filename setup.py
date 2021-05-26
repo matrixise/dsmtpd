@@ -7,14 +7,14 @@
     :license: BSD, see LICENSE for more details
 """
 import os
-from setuptools import setup
-from setuptools import find_packages
 
-from dsmtpd import __version__
-from dsmtpd import __name__
+from setuptools import find_packages
+from setuptools import setup
+
 from dsmtpd import __author__
 from dsmtpd import __author_email__
-
+from dsmtpd import __name__
+from dsmtpd import __version__
 
 HERE = os.path.dirname(__file__)
 

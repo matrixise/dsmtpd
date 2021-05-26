@@ -7,22 +7,22 @@
     :license: BSD, see LICENSE for more details
 """
 
+import argparse
 import asyncore
+import collections
 import contextlib
-from email import policy
 import email.message
 import email.parser
 import email.utils
 import logging
 import mailbox
+import os
 import smtpd
 import sys
-import collections
-import argparse
-import os
+from email import policy
 
-from dsmtpd import __version__
 from dsmtpd import __name__
+from dsmtpd import __version__
 
 LOGGERNAME = 'dsmtpd'
 
