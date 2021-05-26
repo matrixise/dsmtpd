@@ -7,19 +7,6 @@
     :license: BSD, see LICENSE for more details
 """
 
-DOCOPT = """
-dsmtpd: A small SMTP server for the smart developer
-
-Usage:
-    dsmtpd [-i <iface>] [-p <port>] [-d <directory>]
-
-Options:
-    -p <port>      Specify the port for the SMTP server [default: 1025]
-    -i <iface>     Specify the interface [default: 127.0.0.1]
-    -d <directory> Specify a Maildir directory to save the incoming emails
-    -h --help
-    --version
-"""
 import asyncore
 import contextlib
 from email import policy
@@ -31,13 +18,16 @@ import mailbox
 import smtpd
 import sys
 import collections
-
-import docopt
+import argparse
+import os
 
 from dsmtpd import __version__
 from dsmtpd import __name__
 
 LOGGERNAME = 'dsmtpd'
+
+DEFAULT_INTERFACE = '127.0.0.1'
+DEFAULT_PORT = 1025
 
 Config = collections.namedtuple('Config', 'interface port directory')
 
@@ -79,13 +69,24 @@ class DebugServer(smtpd.DebuggingServer):
             with create_maildir(self.config.directory, create=False) as mbox:
                 mbox.add(mailbox.mboxMessage(data))
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description='A small SMTP server for the smart developer',
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument('--interface', '-i', help='Specify the inteface', default=DEFAULT_INTERFACE)
+    parser.add_argument('--port', '-p', help='Specify the port', default=DEFAULT_PORT)
+    parser.add_argument('--directory', '-d', help='Specify a Maildir directory to save the incoming emails', default=os.getcwd())
+    parser.add_argument('--version', action='version', version=__version__)
+
+    return parser.parse_args()
 
 def main():
     logging.basicConfig(format='%(asctime)-15s %(levelname)s: %(message)s',
                         level=logging.INFO)
-    opts = docopt.docopt(DOCOPT, version=__version__)
+    opts = parse_args()
 
-    config = Config(opts['-i'], int(opts['-p']), opts['-d'])
+    config = Config(opts.interface, int(opts.port), opts.directory)
 
     try:
         DebugServer(config)
