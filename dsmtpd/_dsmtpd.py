@@ -76,6 +76,7 @@ class DebugServer(smtpd.DebuggingServer):
 
 def parse_args():
     parser = argparse.ArgumentParser(
+        prog=__name__,
         description="A small SMTP server for the smart developer",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
