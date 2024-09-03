@@ -29,7 +29,7 @@ LOGGERNAME = "dsmtpd"
 DEFAULT_INTERFACE = "127.0.0.1"
 DEFAULT_PORT = 1025
 
-Config = collections.namedtuple("Config", "interface port directory")
+Config = collections.namedtuple("Config", "interface port directory max_size")
 
 log = logging.getLogger(LOGGERNAME)
 
@@ -49,7 +49,9 @@ class DebugServer(smtpd.DebuggingServer):
     def __init__(self, config, *args, **kwargs):
         self.config = config
         smtpd.DebuggingServer.__init__(
-            self, (self.config.interface, self.config.port), None
+            self, localaddr=(self.config.interface, self.config.port),
+            remoteaddr=None,
+            data_size_limit=config.max_size,
         )
 
     def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
@@ -90,6 +92,13 @@ def parse_args():
         help="Specify a Maildir directory to save the incoming emails",
         default=os.getcwd(),
     )
+    parser.add_argument(
+        "--max-size",
+        "-s",
+        help="Maximum message size (default 32 Mebibyte). 0 means no limit.",
+        default=33554432,  # default of smtpd.SMTPServer
+        type=int,
+    )
     parser.add_argument("--version", action="version", version=__version__)
 
     return parser.parse_args()
@@ -101,13 +110,16 @@ def main():
     )
     opts = parse_args()
 
-    config = Config(opts.interface, int(opts.port), opts.directory)
+    config = Config(
+        opts.interface, int(opts.port), opts.directory,
+        None if opts.max_size == 0 else opts.max_size
+    )
 
     try:
         DebugServer(config)
         log.info(
-            "Starting {0} {1} at {2}:{3}".format(
-                __name__, __version__, config.interface, config.port
+            "Starting {0} {1} at {2}:{3} size limit {4}".format(
+                __name__, __version__, config.interface, config.port, config.max_size
             )
         )
 
