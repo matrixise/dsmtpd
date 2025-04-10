@@ -1,0 +1,18 @@
+# SPDX-FileCopyrightText: Institute for Common Good Technology <https://commongoodtechnology.org/>
+# SPDX-License-Identifier: CC0-1.0
+
+[Unit]
+Description=Daemon to run dsmtpd mail debugging service
+After=network.target
+
+[Service]
+User=dsmtpd
+Group=dsmtpd
+WorkingDirectory=/var/lib/dsmtpd/
+ExecStart=/usr/bin/dsmtpd -d Maildir
+KillMode=mixed
+TimeoutStopSec=2
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
