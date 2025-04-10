@@ -8,18 +8,16 @@
 """
 
 import argparse
-import asyncore
-import collections
+import asyncio
 import contextlib
-import email.message
 import email.parser
-import email.utils
 import logging
 import mailbox
 import os
-import smtpd
 import sys
 from email import policy
+from aiosmtpd.controller import Controller
+from aiosmtpd.handlers import Mailbox
 
 from dsmtpd import __name__
 from dsmtpd import __version__
@@ -29,9 +27,11 @@ LOGGERNAME = "dsmtpd"
 DEFAULT_INTERFACE = "127.0.0.1"
 DEFAULT_PORT = 1025
 
-Config = collections.namedtuple("Config", "interface port directory max_size")
-
 log = logging.getLogger(LOGGERNAME)
+
+
+# the default logging (all in level INFO) is too verbose
+logging.getLogger('mail.log').level = logging.WARNING
 
 
 @contextlib.contextmanager
@@ -45,35 +45,25 @@ def create_maildir(maildir, create=True):
         mbox.unlock()
 
 
-class DebugServer(smtpd.DebuggingServer):
-    def __init__(self, config, *args, **kwargs):
-        self.config = config
-        smtpd.DebuggingServer.__init__(
-            self, localaddr=(self.config.interface, self.config.port),
-            remoteaddr=None,
-            data_size_limit=config.max_size,
-        )
-
-    def process_message(self, peer, mailfrom, rcpttos, data, **kwargs):
-        if isinstance(data, bytes):
+class DsmtpdHandler(Mailbox):
+    async def handle_DATA(self, server, session, envelope):
+        if isinstance(envelope.content, bytes):  # python 3.13
             headers = email.parser.BytesHeaderParser(policy=policy.compat32).parsebytes(
-                data
+                envelope.content
             )
         else:
-            # in python 3.5 instance(data, str) is True -> we use the old code
-            headers = email.parser.Parser().parsestr(data)
+            # in python 3.5 instance(envelope.content, str) is True -> we use the old code
+            headers = email.parser.Parser().parsestr(envelope.content)
 
         values = {
-            "peer": ":".join(map(str, peer)),
-            "mailfrom": mailfrom,
-            "rcpttos": ", ".join(rcpttos),
+            "peer": ":".join(map(str, session.peer)),
+            "mail_from": envelope.mail_from,
+            "rcpttos": ", ".join(envelope.rcpt_tos),
             "subject": headers.get("subject"),
         }
-        log.info("%(peer)s: %(mailfrom)s -> %(rcpttos)s [%(subject)s]", values)
+        log.info("%(peer)s: %(mail_from)s -> %(rcpttos)s [%(subject)s]", values)
 
-        if self.config.directory:
-            with create_maildir(self.config.directory, create=False) as mbox:
-                mbox.add(mailbox.mboxMessage(data))
+        return await super().handle_DATA(server, session, envelope)
 
 
 def parse_args():
@@ -96,7 +86,7 @@ def parse_args():
         "--max-size",
         "-s",
         help="Maximum message size (default 32 Mebibyte). 0 means no limit.",
-        default=33554432,  # default of smtpd.SMTPServer
+        default=33554432,  # default of aiosmtpd
         type=int,
     )
     parser.add_argument("--version", action="version", version=__version__)
@@ -110,22 +100,16 @@ def main():
     )
     opts = parse_args()
 
-    config = Config(
-        opts.interface, int(opts.port), opts.directory,
-        None if opts.max_size == 0 else opts.max_size
-    )
-
     try:
-        DebugServer(config)
         log.info(
             "Starting {0} {1} at {2}:{3} size limit {4}".format(
-                __name__, __version__, config.interface, config.port, config.max_size
+                __name__, __version__, opts.interface, int(opts.port), None if opts.max_size == 0 else opts.max_size
             )
         )
 
-        if config.directory:
+        if opts.directory:
             try:
-                with create_maildir(config.directory) as maildir:
+                with create_maildir(opts.directory) as maildir:
                     if len(maildir) > 0:
                         log.info(
                             "Found a Maildir storage with {} mails".format(len(maildir))
@@ -134,12 +118,16 @@ def main():
                 log.fatal(
                     "{} must be either non-existing (at a place where "
                     "it can be created) or an existing Maildir "
-                    "storage".format(config.directory)
+                    "storage".format(opts.directory)
                 )
                 raise
 
-            log.info("Storing the incoming emails into {}".format(config.directory))
-        asyncore.loop()
+            log.info("Storing the incoming emails into {}".format(opts.directory))
+        controller = Controller(DsmtpdHandler(opts.directory))
+        controller.start()
+        asyncio.get_event_loop().run_forever()
+        controller.stop()
+
     except KeyboardInterrupt:
         log.info("Cleaning up")
 
