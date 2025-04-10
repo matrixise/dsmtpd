@@ -73,9 +73,9 @@ def parse_args():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--interface", "-i", help="Specify the inteface", default=DEFAULT_INTERFACE
+        "--interface", "-i", help="Specify the interface", default=DEFAULT_INTERFACE,
     )
-    parser.add_argument("--port", "-p", help="Specify the port", default=DEFAULT_PORT)
+    parser.add_argument("--port", "-p", help="Specify the port", default=DEFAULT_PORT, type=int)
     parser.add_argument(
         "--directory",
         "-d",
@@ -103,7 +103,7 @@ def main():
     try:
         log.info(
             "Starting {0} {1} at {2}:{3} size limit {4}".format(
-                __name__, __version__, opts.interface, int(opts.port), None if opts.max_size == 0 else opts.max_size
+                __name__, __version__, opts.interface, opts.port, None if opts.max_size == 0 else opts.max_size
             )
         )
 
@@ -123,7 +123,7 @@ def main():
                 raise
 
             log.info("Storing the incoming emails into {}".format(opts.directory))
-        controller = Controller(DsmtpdHandler(opts.directory))
+        controller = Controller(DsmtpdHandler(opts.directory), hostname=opts.interface, port=opts.port, data_size_limit=opts.max_size)
         controller.start()
         asyncio.get_event_loop().run_forever()
         controller.stop()
