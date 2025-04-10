@@ -8,3 +8,6 @@ check-dist:
 
 upload:
 	twine upload dist/*
+
+test:
+	pytest
