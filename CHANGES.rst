@@ -3,6 +3,15 @@ dsmtpd Changelog
 
 Here you can see the full list of changes between each dsmtpd release.
 
+Version 1.0
+-----------
+
+To be released.
+
+- Migration to aiosmtpd to Support Python >= 3.12 (#11, patch by Sebastian Wagner)
+- Add minimal tests for maildir check and importability
+- Add systemd service file (by Sebastian Wagner)
+
 Version 0.3
 -----------
 
