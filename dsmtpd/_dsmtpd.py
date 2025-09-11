@@ -44,6 +44,26 @@ def create_maildir(maildir, create=True):
     finally:
         mbox.unlock()
 
+def ensure_maildir(path):
+    """
+    Ensure that *path* is a valid Maildir root.
+    If *path* does not exist, create a fresh Maildir (tmp/new/cur).
+    If *path* exists, create any missing subfolders without wiping content.
+    """
+    # If path doesn't exist at all → let mailbox.Maildir create the full layout.
+    if not os.path.exists(path):
+        mailbox.Maildir(path, create=True)
+        return
+
+    for sub in ("tmp", "new", "cur"):
+        os.makedirs(os.path.join(path, sub), exist_ok=True)
+
+def is_maildir(path):
+    "Quick structural check for a Maildir root."
+    return all(
+        os.path.isdir(os.path.join(path, sub))
+        for sub in ("tmp", "new", "cur")
+    )
 
 class DsmtpdHandler(Mailbox):
     async def handle_DATA(self, server, session, envelope):
@@ -108,19 +128,31 @@ def main():
         )
 
         if opts.directory:
-            try:
-                with create_maildir(opts.directory) as maildir:
-                    if len(maildir) > 0:
-                        log.info(
-                            "Found a Maildir storage with {} mails".format(len(maildir))
-                        )
-            except:
+            # Make sure it's a valid Maildir, whether or not the path already exists.
+            ensure_maildir(opts.directory)
+
+            # Double-check structure (defensive) and log a helpful error if not OK.
+            if not is_maildir(opts.directory):
                 log.fatal(
-                    "{} must be either non-existing (at a place where "
-                    "it can be created) or an existing Maildir "
-                    "storage".format(opts.directory)
+                    "%s must be either non-existing (so it can be created) or an existing Maildir (tmp/new/cur).",
+                    opts.directory,
                 )
-                raise
+                return 2
+
+            # Safely open and count messages (no crash if the dir previously lacked subdirs).
+            with create_maildir(opts.directory, create=False) as maildir:
+                try:
+                    counter = len(maildir)
+                except FileNotFoundError as exc:
+                    # Extremely defensive: repair and retry once.
+                    log.warning("Repairing Maildir layout after FileNotFoundError: %s", exc)
+                    ensure_maildir(opts.directory)
+                    counter = len(maildir)
+
+                if counter > 0:
+                    log.info(
+                        "Found a Maildir storage with {} mails".format(counter)
+                    )
 
             log.info("Storing the incoming emails into {}".format(opts.directory))
         controller = Controller(DsmtpdHandler(opts.directory), hostname=opts.interface, port=opts.port, data_size_limit=opts.max_size)

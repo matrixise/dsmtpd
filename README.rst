@@ -7,7 +7,7 @@ Usage
 -----
 
 ::
-    
+
     $ dsmtpd -p 1025 -i 127.0.0.1
     2013-01-13 14:00:07,346 INFO: Starting SMTP server at 127.0.0.1:1025
 
@@ -43,6 +43,22 @@ Here is a small example::
     dsmtpd
 
     swaks --from stephane@wirtel.be --to foo@bar.com  --server localhost --port 1025
+
+Exit Codes
+----------
+
+``dsmtpd`` uses specific exit codes to indicate the result of its execution.
+
++------+---------------------------+--------------------------------------------+
+| Code | Meaning                   | Example                                    |
++======+===========================+============================================+
+| 0    | Success                   | Normal shutdown (e.g. user pressed         |
+|      |                           | ``Ctrl+C``) or clean termination.          |
++------+---------------------------+--------------------------------------------+
+| 2    | Invalid Maildir directory | The given path exists but does not contain |
+|      |                           | the required subfolders: ``tmp``, ``new``, |
+|      |                           | and ``cur``.                               |
++------+---------------------------+--------------------------------------------+
 
 Contributing
 ------------
