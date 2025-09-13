@@ -31,7 +31,7 @@ log = logging.getLogger(LOGGERNAME)
 
 
 # the default logging (all in level INFO) is too verbose
-logging.getLogger('mail.log').level = logging.WARNING
+logging.getLogger("mail.log").level = logging.WARNING
 
 
 @contextlib.contextmanager
@@ -43,6 +43,7 @@ def create_maildir(maildir, create=True):
 
     finally:
         mbox.unlock()
+
 
 def ensure_maildir(path):
     """
@@ -58,12 +59,11 @@ def ensure_maildir(path):
     for sub in ("tmp", "new", "cur"):
         os.makedirs(os.path.join(path, sub), exist_ok=True)
 
+
 def is_maildir(path):
     "Quick structural check for a Maildir root."
-    return all(
-        os.path.isdir(os.path.join(path, sub))
-        for sub in ("tmp", "new", "cur")
-    )
+    return all(os.path.isdir(os.path.join(path, sub)) for sub in ("tmp", "new", "cur"))
+
 
 class DsmtpdHandler(Mailbox):
     async def handle_DATA(self, server, session, envelope):
@@ -93,9 +93,14 @@ def parse_args():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--interface", "-i", help="Specify the interface", default=DEFAULT_INTERFACE,
+        "--interface",
+        "-i",
+        help="Specify the interface",
+        default=DEFAULT_INTERFACE,
     )
-    parser.add_argument("--port", "-p", help="Specify the port", default=DEFAULT_PORT, type=int)
+    parser.add_argument(
+        "--port", "-p", help="Specify the port", default=DEFAULT_PORT, type=int
+    )
     parser.add_argument(
         "--directory",
         "-d",
@@ -123,7 +128,11 @@ def main():
     try:
         log.info(
             "Starting {0} {1} at {2}:{3} size limit {4}".format(
-                __name__, __version__, opts.interface, opts.port, None if opts.max_size == 0 else opts.max_size
+                __name__,
+                __version__,
+                opts.interface,
+                opts.port,
+                None if opts.max_size == 0 else opts.max_size,
             )
         )
 
@@ -145,17 +154,22 @@ def main():
                     counter = len(maildir)
                 except FileNotFoundError as exc:
                     # Extremely defensive: repair and retry once.
-                    log.warning("Repairing Maildir layout after FileNotFoundError: %s", exc)
+                    log.warning(
+                        "Repairing Maildir layout after FileNotFoundError: %s", exc
+                    )
                     ensure_maildir(opts.directory)
                     counter = len(maildir)
 
                 if counter > 0:
-                    log.info(
-                        "Found a Maildir storage with {} mails".format(counter)
-                    )
+                    log.info("Found a Maildir storage with {} mails".format(counter))
 
             log.info("Storing the incoming emails into {}".format(opts.directory))
-        controller = Controller(DsmtpdHandler(opts.directory), hostname=opts.interface, port=opts.port, data_size_limit=opts.max_size)
+        controller = Controller(
+            DsmtpdHandler(opts.directory),
+            hostname=opts.interface,
+            port=opts.port,
+            data_size_limit=opts.max_size,
+        )
         controller.start()
         asyncio.get_event_loop().run_forever()
         controller.stop()
