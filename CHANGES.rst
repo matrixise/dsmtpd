@@ -3,6 +3,16 @@ dsmtpd Changelog
 
 Here you can see the full list of changes between each dsmtpd release.
 
+Version 1.1
+-----------
+
+Released on September 13th 2025.
+
+- Lower Python version requirement from 3.12 to 3.10 (#17)
+- Fix crash when directory exists but is not yet a valid Maildir with proper validation and repair functionality (#18)
+- Add exit codes documentation to README
+- Code formatting improvements with ruff
+
 Version 1.0
 -----------
 
