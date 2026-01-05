@@ -1,0 +1,231 @@
+version: '3'
+
+vars:
+  PYTHON: python3
+  RUFF: ruff
+
+tasks:
+  # Setup tasks
+  setup-venv:
+    desc: Create virtual environment
+    cmds:
+      - "{{.PYTHON}} -m venv .venv"
+      - echo "Virtual environment created. Activate it with 'source .venv/bin/activate'"
+
+  install-deps:
+    desc: Install dependencies in virtual environment
+    deps: [setup-venv]
+    cmds:
+      - .venv/bin/pip install --upgrade pip
+      - .venv/bin/pip install -e ".[dev]"
+
+  # Development tasks
+  format:
+    desc: Format code with ruff
+    cmds:
+      - "{{.RUFF}} format ."
+      - "{{.RUFF}} check --fix ."
+
+  lint:
+    desc: Run linting checks
+    cmds:
+      - "{{.RUFF}} check ."
+
+  test:
+    desc: Run tests
+    cmds:
+      - "{{.PYTHON}} -m pytest tests/ -v"
+
+  # Git and release management
+  status:
+    desc: Show git status and current version
+    cmds:
+      - echo "=== Git Status ==="
+      - git status
+      - echo ""
+      - echo "=== Current Version ==="
+      - grep "__version__" dsmtpd/__init__.py
+      - echo ""
+      - echo "=== Latest Tags ==="
+      - git tag -l --sort=-version:refname | head -5
+
+  commit-format:
+    desc: Commit formatting changes
+    cmds:
+      - git add .
+      - git commit -m "Format code with ruff"
+    preconditions:
+      - test -n "$(git diff --cached --name-only)"
+
+  # Version management
+  bump-patch:
+    desc: Bump patch version (e.g., 1.1.0 -> 1.1.1)
+    vars:
+      CURRENT_VERSION:
+        sh: grep -o '__version__ = "[^"]*"' dsmtpd/__init__.py | cut -d'"' -f2
+      NEW_VERSION:
+        sh: |
+          CURRENT=$(grep -o '__version__ = "[^"]*"' dsmtpd/__init__.py | cut -d'"' -f2)
+          echo $CURRENT | awk -F. '{$NF = $NF + 1; print}' OFS='.'
+    cmds:
+      - echo "Bumping version from {{.CURRENT_VERSION}} to {{.NEW_VERSION}}"
+      - sed -i '' 's/__version__ = "{{.CURRENT_VERSION}}"/__version__ = "{{.NEW_VERSION}}"/g' dsmtpd/__init__.py
+
+  bump-minor:
+    desc: Bump minor version (e.g., 1.1.0 -> 1.2.0)
+    vars:
+      CURRENT_VERSION:
+        sh: grep -o '__version__ = "[^"]*"' dsmtpd/__init__.py | cut -d'"' -f2
+      NEW_VERSION:
+        sh: |
+          CURRENT=$(grep -o '__version__ = "[^"]*"' dsmtpd/__init__.py | cut -d'"' -f2)
+          echo $CURRENT | awk -F. '{$(NF-1) = $(NF-1) + 1; $NF = 0; print}' OFS='.'
+    cmds:
+      - echo "Bumping version from {{.CURRENT_VERSION}} to {{.NEW_VERSION}}"
+      - sed -i '' 's/__version__ = "{{.CURRENT_VERSION}}"/__version__ = "{{.NEW_VERSION}}"/g' dsmtpd/__init__.py
+
+  bump-major:
+    desc: Bump major version (e.g., 1.1.0 -> 2.0.0)
+    vars:
+      CURRENT_VERSION:
+        sh: grep -o '__version__ = "[^"]*"' dsmtpd/__init__.py | cut -d'"' -f2
+      NEW_VERSION:
+        sh: |
+          CURRENT=$(grep -o '__version__ = "[^"]*"' dsmtpd/__init__.py | cut -d'"' -f2)
+          echo $CURRENT | awk -F. '{$(NF-2) = $(NF-2) + 1; $(NF-1) = 0; $NF = 0; print}' OFS='.'
+    cmds:
+      - echo "Bumping version from {{.CURRENT_VERSION}} to {{.NEW_VERSION}}"
+      - sed -i '' 's/__version__ = "{{.CURRENT_VERSION}}"/__version__ = "{{.NEW_VERSION}}"/g' dsmtpd/__init__.py
+
+  # Changelog management
+  update-changelog:
+    desc: Update CHANGES.rst with new version entry
+    vars:
+      VERSION:
+        sh: grep -o '__version__ = "[^"]*"' dsmtpd/__init__.py | cut -d'"' -f2
+      DATE:
+        sh: date '+%B %dth %Y'
+    cmds:
+      - echo "Adding changelog entry for version {{.VERSION}}"
+      - |
+        # Create temp file with new version entry
+        cat > /tmp/new_version.rst << EOF
+        Version {{.VERSION}}
+        -----------
+
+        Released on {{.DATE}}.
+
+        - TODO: Add changelog entries here
+
+        EOF
+        
+        # Insert after the header and before Version entries
+        sed -i '' '/Here you can see the full list of changes/r /tmp/new_version.rst' CHANGES.rst
+        rm /tmp/new_version.rst
+      - echo "Please edit CHANGES.rst to add the actual changelog entries"
+
+  # Complete release process
+  prepare-release:
+    desc: Prepare a new release (format, update changelog, commit)
+    deps: [format]
+    vars:
+      VERSION:
+        sh: grep -o '__version__ = "[^"]*"' dsmtpd/__init__.py | cut -d'"' -f2
+    cmds:
+      - task: update-changelog
+      - echo "Please edit CHANGES.rst with the actual changes for version {{.VERSION}}"
+      - echo "Then run 'task release' to complete the release process"
+
+  release:
+    desc: Complete release process (commit, tag, push, create GitHub release)
+    vars:
+      VERSION:
+        sh: grep -o '__version__ = "[^"]*"' dsmtpd/__init__.py | cut -d'"' -f2
+      PREVIOUS_TAG:
+        sh: git tag -l --sort=-version:refname | grep -v "v{{.VERSION}}" | head -1
+    cmds:
+      - echo "Creating release for version {{.VERSION}}"
+      - git add dsmtpd/__init__.py CHANGES.rst
+      - |
+        git commit -m "Release version {{.VERSION}}
+
+        - Bump version to {{.VERSION}} in __init__.py
+        - Update CHANGES.rst with changelog for version {{.VERSION}}"
+      - git tag -a "v{{.VERSION}}" -m "Release version {{.VERSION}}"
+      - git push
+      - git push --tags
+      - task: create-github-release
+    preconditions:
+      - test -n "$(git diff --cached --name-only)" || test -n "$(git diff --name-only dsmtpd/__init__.py CHANGES.rst)"
+
+  create-github-release:
+    desc: Create GitHub release from changelog
+    vars:
+      VERSION:
+        sh: grep -o '__version__ = "[^"]*"' dsmtpd/__init__.py | cut -d'"' -f2
+      PREVIOUS_TAG:
+        sh: git tag -l --sort=-version:refname | grep -v "v{{.VERSION}}" | head -1
+      CHANGELOG_NOTES:
+        sh: |
+          # Extract changelog for current version from CHANGES.rst
+          awk "/^Version {{.VERSION}}/{flag=1; next} /^Version [0-9]/{flag=0} flag && /^-/{print}" CHANGES.rst | \
+          sed 's/^- /- **/' | sed 's/$/**/' | sed 's/\*\*$/ -/' | sed 's/- \*\*\(.*\)\*\* -/- \1/'
+    cmds:
+      - |
+        gh release create "v{{.VERSION}}" \
+          --title "Release v{{.VERSION}}" \
+          --notes "## What's Changed
+
+        {{.CHANGELOG_NOTES}}
+
+        ## Installation
+
+        \`\`\`bash
+        pip install dsmtpd=={{.VERSION}}
+        \`\`\`
+
+        **Full Changelog**: https://github.com/matrixise/dsmtpd/compare/{{.PREVIOUS_TAG}}...v{{.VERSION}}"
+
+  # Utility tasks
+  clean:
+    desc: Clean build artifacts and cache
+    cmds:
+      - rm -rf build/ dist/ *.egg-info/
+      - find . -type d -name __pycache__ -delete
+      - find . -type f -name "*.pyc" -delete
+
+  build:
+    desc: Build package
+    deps: [clean]
+    cmds:
+      - "{{.PYTHON}} -m build"
+
+  install-dev:
+    desc: Install in development mode
+    cmds:
+      - "{{.PYTHON}} -m pip install -e ."
+
+  # Quick release workflows
+  patch-release:
+    desc: Complete patch release workflow
+    cmds:
+      - task: bump-patch
+      - task: prepare-release
+
+  minor-release:
+    desc: Complete minor release workflow
+    cmds:
+      - task: bump-minor
+      - task: prepare-release
+
+  major-release:
+    desc: Complete major release workflow
+    cmds:
+      - task: bump-major
+      - task: prepare-release
+
+  # Help
+  help:
+    desc: Show available tasks
+    cmds:
+      - task --list
