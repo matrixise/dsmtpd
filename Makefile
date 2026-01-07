@@ -4,6 +4,9 @@ PYTHON := python3
 VENV := .venv
 VENV_PYTHON := $(VENV)/bin/python3
 VENV_PIP := $(VENV)/bin/pip
+REQUIREMENTS := requirements-dev.txt
+SETUP_CFG := setup.cfg
+INSTALL_TIMESTAMP := $(VENV)/.install-timestamp
 
 # Create virtual environment
 venv:
@@ -15,15 +18,21 @@ venv:
 		echo "Virtual environment already exists at $(VENV)"; \
 	fi
 
-# Install development dependencies
-install-dev: venv
+# Install development dependencies (only when needed)
+$(INSTALL_TIMESTAMP): $(REQUIREMENTS) $(SETUP_CFG) | venv
 	@echo "Installing development dependencies..."
 	$(VENV_PIP) install --upgrade pip
-	$(VENV_PIP) install -r requirements-dev.txt
+	$(VENV_PIP) install -r $(REQUIREMENTS)
 	$(VENV_PIP) install -e .
+	@touch $(INSTALL_TIMESTAMP)
 	@echo "Development environment ready!"
 
-build: venv
+# Force reinstall of development dependencies
+install-dev:
+	@rm -f $(INSTALL_TIMESTAMP)
+	@$(MAKE) $(INSTALL_TIMESTAMP)
+
+build: $(INSTALL_TIMESTAMP)
 	$(VENV_PYTHON) -m build
 
 check-dist:
@@ -32,7 +41,7 @@ check-dist:
 upload:
 	$(VENV)/bin/twine upload dist/*
 
-test: install-dev
+test: $(INSTALL_TIMESTAMP)
 	$(VENV)/bin/pytest
 
 # Clean build artifacts
