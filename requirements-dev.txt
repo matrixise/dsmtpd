@@ -5,3 +5,4 @@ build
 ruff
 mypy
 types-setuptools
+prek
