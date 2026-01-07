@@ -6,6 +6,10 @@ Here you can see the full list of changes between each dsmtpd release.
 Version 1.2 (unreleased)
 -------------------------
 
+Features:
+
+- Add ``--disable-smtputf8`` CLI option to disable SMTPUTF8 extension for legacy client compatibility (#34)
+
 Development improvements:
 
 - Enhanced Makefile with automatic virtual environment management
