@@ -1,3 +1,7 @@
 pytest
+pytest-cov
 twine
 build
+ruff
+mypy
+types-setuptools

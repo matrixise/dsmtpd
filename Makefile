@@ -44,6 +44,16 @@ upload:
 test: $(INSTALL_TIMESTAMP)
 	$(VENV)/bin/pytest
 
+lint: $(INSTALL_TIMESTAMP)
+	$(VENV)/bin/ruff check dsmtpd/ tests/
+	$(VENV)/bin/ruff format --check dsmtpd/ tests/
+
+format: $(INSTALL_TIMESTAMP)
+	$(VENV)/bin/ruff format dsmtpd/ tests/
+
+typecheck: $(INSTALL_TIMESTAMP)
+	$(VENV)/bin/mypy dsmtpd/
+
 # Clean build artifacts
 clean-build:
 	rm -rf build/
