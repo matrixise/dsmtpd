@@ -3,6 +3,17 @@ dsmtpd Changelog
 
 Here you can see the full list of changes between each dsmtpd release.
 
+Version 1.2 (unreleased)
+-------------------------
+
+Development improvements:
+
+- Enhanced Makefile with automatic virtual environment management
+- Add smart dependency tracking to avoid unnecessary reinstallations during development
+- New make targets: ``install-dev``, ``clean``, ``clean-build``, ``clean-venv``
+- Makefile now uses Python from asdf/mise for consistent development environments
+- Significantly faster repeated test runs with timestamp-based dependency tracking
+
 Version 1.1
 -----------
 
