@@ -1,8 +1,8 @@
-from tempfile import TemporaryDirectory
-from os import listdir
 import asyncio
-from unittest.mock import Mock, patch
 import mailbox
+from os import listdir
+from tempfile import TemporaryDirectory
+from unittest.mock import Mock, patch
 
 # at least tests the import
 from dsmtpd._dsmtpd import DsmtpdHandler, create_maildir, ensure_maildir, is_maildir

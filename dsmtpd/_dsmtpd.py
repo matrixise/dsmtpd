@@ -16,11 +16,11 @@ import mailbox
 import os
 import sys
 from email import policy
+
 from aiosmtpd.controller import Controller
 from aiosmtpd.handlers import Mailbox
 
-from dsmtpd import __name__
-from dsmtpd import __version__
+from dsmtpd import __name__, __version__
 
 LOGGERNAME = "dsmtpd"
 
@@ -127,13 +127,7 @@ def main():
 
     try:
         log.info(
-            "Starting {0} {1} at {2}:{3} size limit {4}".format(
-                __name__,
-                __version__,
-                opts.interface,
-                opts.port,
-                None if opts.max_size == 0 else opts.max_size,
-            )
+            f"Starting {__name__} {__version__} at {opts.interface}:{opts.port} size limit {None if opts.max_size == 0 else opts.max_size}"
         )
 
         if opts.directory:
@@ -161,9 +155,9 @@ def main():
                     counter = len(maildir)
 
                 if counter > 0:
-                    log.info("Found a Maildir storage with {} mails".format(counter))
+                    log.info(f"Found a Maildir storage with {counter} mails")
 
-            log.info("Storing the incoming emails into {}".format(opts.directory))
+            log.info(f"Storing the incoming emails into {opts.directory}")
         controller = Controller(
             DsmtpdHandler(opts.directory),
             hostname=opts.interface,

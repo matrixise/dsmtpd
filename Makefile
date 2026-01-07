@@ -1,4 +1,4 @@
-.PHONY: venv install-dev build check-dist upload test clean-build clean-venv clean
+.PHONY: venv install-dev build check-dist upload test lint lint-fix format typecheck clean-build clean-venv clean
 
 PYTHON := python3
 VENV := .venv
@@ -47,6 +47,10 @@ test: $(INSTALL_TIMESTAMP)
 lint: $(INSTALL_TIMESTAMP)
 	$(VENV)/bin/ruff check dsmtpd/ tests/
 	$(VENV)/bin/ruff format --check dsmtpd/ tests/
+
+lint-fix: $(INSTALL_TIMESTAMP)
+	$(VENV)/bin/ruff check --fix dsmtpd/ tests/
+	$(VENV)/bin/ruff format dsmtpd/ tests/
 
 format: $(INSTALL_TIMESTAMP)
 	$(VENV)/bin/ruff format dsmtpd/ tests/
