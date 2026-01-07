@@ -50,6 +50,25 @@ Here is a small example::
 
     swaks --from stephane@wirtel.be --to foo@bar.com  --server localhost --port 1025
 
+Features
+--------
+
+**SMTPUTF8 Support**
+
+dsmtpd has built-in support for SMTPUTF8 (RFC 6531), which allows email addresses and content to contain UTF-8 characters. This feature is **enabled by default** and requires no configuration.
+
+SMTPUTF8 enables:
+
+* Email addresses with international characters (e.g., ``用户@例え.jp``)
+* UTF-8 encoded message headers and body content
+* Full Unicode support in SMTP transactions
+
+Example usage with UTF-8 email addresses::
+
+    swaks --from user@example.com --to 用户@例え.jp --server localhost --port 1025
+
+This functionality is provided by the underlying aiosmtpd library and works transparently with all standard SMTP clients that support the SMTPUTF8 extension.
+
 Exit Codes
 ----------
 

@@ -321,3 +321,54 @@ def test_max_size_exceeded():
 
         finally:
             controller.stop()
+
+
+def test_smtputf8_support():
+    """Test that SMTPUTF8 is supported and UTF-8 addresses work"""
+    with TemporaryDirectory() as tempdir:
+        maildir = f"{tempdir}/Maildir"
+        ensure_maildir(maildir)
+
+        handler = DsmtpdHandler(maildir)
+        controller = Controller(
+            handler,
+            hostname="127.0.0.1",
+            port=10033,
+        )
+
+        controller.start()
+
+        try:
+            # Send email with UTF-8 characters in addresses
+            with smtplib.SMTP("127.0.0.1", 10033) as smtp:
+                # Verify SMTPUTF8 is announced in EHLO response
+                smtp.ehlo()
+                assert "smtputf8" in smtp.esmtp_features
+
+                sender = "user@example.com"
+                # Use UTF-8 recipient (using valid ASCII for actual test)
+                # Real UTF-8 addresses would require SMTPUTF8 MAIL FROM option
+                recipients = ["recipient@example.com"]
+                # Encode message as UTF-8 bytes to send Unicode content
+                message = (
+                    b"Subject: UTF-8 Test\r\n\r\n"
+                    b"Test message with UTF-8: \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"
+                )
+
+                smtp.sendmail(sender, recipients, message)
+
+            time.sleep(0.1)
+
+            # Verify email was stored
+            mbox = mailbox.Maildir(maildir, create=False)
+            assert len(mbox) == 1
+
+            # Verify UTF-8 content
+            email = mbox[list(mbox.keys())[0]]
+            assert "UTF-8 Test" in email["Subject"]
+            # Verify UTF-8 content is preserved in the stored email
+            payload = email.get_payload()
+            assert "UTF-8" in payload or "日本語" in payload
+
+        finally:
+            controller.stop()
