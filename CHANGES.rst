@@ -15,6 +15,7 @@ Development improvements:
 - Significantly faster repeated test runs with timestamp-based dependency tracking
 - Add comprehensive tests for the debugging SMTP server (#8)
 - New integration tests for email reception, storage, and multipart email handling
+- Add support for Python 3.14 (#25)
 
 Version 1.1
 -----------
