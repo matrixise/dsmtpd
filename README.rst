@@ -117,5 +117,28 @@ Or directly with pytest::
 
     .venv/bin/pytest
 
+**Code Quality & Pre-commit Hooks**
+
+The project uses `prek <https://github.com/j178/prek>`_ to simplify pre-commit hook setup.
+
+After installing development dependencies, set up pre-commit hooks::
+
+    prek install
+
+This automatically installs git hooks that will:
+
+* Run ``ruff`` linter with auto-fix
+* Run ``ruff format`` for code formatting
+* Run ``mypy`` for type checking
+
+You can also run quality checks manually::
+
+    make lint        # Check code quality
+    make lint-fix    # Auto-fix linting issues
+    make typecheck   # Run mypy type checking
+
+The pre-commit hooks ensure code quality before commits, catching issues early and
+maintaining consistent code standards across all contributions.
+
 
 Copyright 2013 (c) by Stephane Wirtel
