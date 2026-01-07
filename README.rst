@@ -63,7 +63,53 @@ Exit Codes
 Contributing
 ------------
 
+Clone the repository::
+
     git clone git://github.com/matrixise/dsmtpd.git
+    cd dsmtpd
+
+Development
+-----------
+
+The project includes a Makefile to simplify development tasks. It automatically manages
+a virtual environment and dependencies using Python from asdf or mise.
+
+**Quick Start**
+
+Set up your development environment::
+
+    make install-dev
+
+This creates a ``.venv`` virtual environment and installs all development dependencies.
+
+**Available Make Targets**
+
+* ``make install-dev`` - Set up development environment (creates venv and installs dependencies)
+* ``make test`` - Run tests with pytest (automatically installs dependencies if needed)
+* ``make build`` - Build distribution packages
+* ``make clean`` - Remove all build artifacts and virtual environment
+* ``make clean-build`` - Remove only build artifacts (dist/, build/, *.egg-info)
+* ``make clean-venv`` - Remove only the virtual environment
+
+**Workflow Tips**
+
+The Makefile uses smart dependency tracking. Running ``make test`` multiple times will only
+reinstall dependencies if ``requirements-dev.txt`` or ``setup.cfg`` have changed, making
+repeated test runs much faster.
+
+To force a fresh installation of dependencies::
+
+    make install-dev
+
+**Running Tests**
+
+After setting up the development environment::
+
+    make test
+
+Or directly with pytest::
+
+    .venv/bin/pytest
 
 
 Copyright 2013 (c) by Stephane Wirtel
