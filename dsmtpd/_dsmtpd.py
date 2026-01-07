@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """
-    dsmtpd/_dsmtpd.py
-    ~~~~~~~~~~~~~~~~~
+dsmtpd/_dsmtpd.py
+~~~~~~~~~~~~~~~~~
 
-    :copyright: (c) 2013 by Stephane Wirtel <stephane@wirtel.be>
-    :license: BSD, see LICENSE for more details
+:copyright: (c) 2013 by Stephane Wirtel <stephane@wirtel.be>
+:license: BSD, see LICENSE for more details
 """
 
 import argparse
@@ -16,11 +16,11 @@ import mailbox
 import os
 import sys
 from email import policy
+
 from aiosmtpd.controller import Controller
 from aiosmtpd.handlers import Mailbox
 
-from dsmtpd import __name__
-from dsmtpd import __version__
+from dsmtpd import __name__, __version__
 
 LOGGERNAME = "dsmtpd"
 
@@ -66,7 +66,7 @@ def is_maildir(path):
 
 
 class DsmtpdHandler(Mailbox):
-    async def handle_DATA(self, server, session, envelope):
+    async def handle_DATA(self, server, session, envelope):  # noqa: N802
         if isinstance(envelope.content, bytes):  # python 3.13
             headers = email.parser.BytesHeaderParser(policy=policy.compat32).parsebytes(
                 envelope.content
@@ -98,9 +98,7 @@ def parse_args():
         help="Specify the interface",
         default=DEFAULT_INTERFACE,
     )
-    parser.add_argument(
-        "--port", "-p", help="Specify the port", default=DEFAULT_PORT, type=int
-    )
+    parser.add_argument("--port", "-p", help="Specify the port", default=DEFAULT_PORT, type=int)
     parser.add_argument(
         "--directory",
         "-d",
@@ -120,20 +118,14 @@ def parse_args():
 
 
 def main():
-    logging.basicConfig(
-        format="%(asctime)-15s %(levelname)s: %(message)s", level=logging.INFO
-    )
+    logging.basicConfig(format="%(asctime)-15s %(levelname)s: %(message)s", level=logging.INFO)
     opts = parse_args()
 
     try:
+        size_limit = None if opts.max_size == 0 else opts.max_size
         log.info(
-            "Starting {0} {1} at {2}:{3} size limit {4}".format(
-                __name__,
-                __version__,
-                opts.interface,
-                opts.port,
-                None if opts.max_size == 0 else opts.max_size,
-            )
+            f"Starting {__name__} {__version__} at {opts.interface}:{opts.port} "
+            f"size limit {size_limit}"
         )
 
         if opts.directory:
@@ -143,7 +135,8 @@ def main():
             # Double-check structure (defensive) and log a helpful error if not OK.
             if not is_maildir(opts.directory):
                 log.fatal(
-                    "%s must be either non-existing (so it can be created) or an existing Maildir (tmp/new/cur).",
+                    "%s must be either non-existing (so it can be created) "
+                    "or an existing Maildir (tmp/new/cur).",
                     opts.directory,
                 )
                 return 2
@@ -154,16 +147,14 @@ def main():
                     counter = len(maildir)
                 except FileNotFoundError as exc:
                     # Extremely defensive: repair and retry once.
-                    log.warning(
-                        "Repairing Maildir layout after FileNotFoundError: %s", exc
-                    )
+                    log.warning("Repairing Maildir layout after FileNotFoundError: %s", exc)
                     ensure_maildir(opts.directory)
                     counter = len(maildir)
 
                 if counter > 0:
-                    log.info("Found a Maildir storage with {} mails".format(counter))
+                    log.info(f"Found a Maildir storage with {counter} mails")
 
-            log.info("Storing the incoming emails into {}".format(opts.directory))
+            log.info(f"Storing the incoming emails into {opts.directory}")
         controller = Controller(
             DsmtpdHandler(opts.directory),
             hostname=opts.interface,
