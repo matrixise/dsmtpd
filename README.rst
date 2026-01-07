@@ -28,28 +28,60 @@ For the installation, we recommend to use a virtualenv, it's the easy way if you
 
     pip install dsmtpd
 
-Documentation
--------------
+Command-Line Options
+--------------------
 
-Execute dsmtpd with the --help flag and you will get the usage of this command::
+``-p PORT, --port PORT``
+    Specify the port to listen on. Default: **1025**
 
-    dsmtpd --help
+``-i INTERFACE, --interface INTERFACE``
+    Specify the network interface to bind to. Default: **127.0.0.1** (loopback)
 
-Available options:
+``-d DIRECTORY, --directory DIRECTORY``
+    Specify a Maildir directory to save incoming emails. Default: current directory
 
-* -p You specify the port of dsmtpd (default is 1025)
-* -i You specify the network interface (default is loopback, 127.0.0.1)
-* -d You specify a Maildir directory to save the incoming emails
-* --disable-smtputf8 Disable SMTPUTF8 extension (enabled by default)
+``-s SIZE, --max-size SIZE``
+    Maximum message size in bytes. Use **0** for no limit. Default: **33554432** (32 MiB)
 
-Use it
-------
+``--disable-smtputf8``
+    Disable SMTPUTF8 extension for legacy SMTP client compatibility. Default: **enabled**
 
-Here is a small example::
+``--version``
+    Show program version and exit
+
+``-h, --help``
+    Show help message and exit
+
+Usage Examples
+--------------
+
+Start server with default settings (port 1025, localhost)::
 
     dsmtpd
 
-    swaks --from stephane@wirtel.be --to foo@bar.com  --server localhost --port 1025
+Start server on custom port::
+
+    dsmtpd -p 2525
+
+Bind to all interfaces::
+
+    dsmtpd -i 0.0.0.0 -p 25
+
+Save emails to specific Maildir::
+
+    dsmtpd -d /path/to/maildir
+
+Limit message size to 10 MB::
+
+    dsmtpd --max-size 10485760
+
+Disable UTF-8 support for legacy clients::
+
+    dsmtpd --disable-smtputf8
+
+Send a test email with swaks::
+
+    swaks --from sender@example.com --to recipient@example.com --server localhost --port 1025
 
 Features
 --------
