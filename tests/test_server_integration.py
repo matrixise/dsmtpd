@@ -1,6 +1,7 @@
 """
 Integration tests for the SMTP server
 """
+
 import mailbox
 import smtplib
 import time
@@ -22,7 +23,7 @@ def test_server_starts_and_stops():
         handler = DsmtpdHandler(maildir)
         controller = Controller(
             handler,
-            hostname='127.0.0.1',
+            hostname="127.0.0.1",
             port=10025,
         )
 
@@ -47,7 +48,7 @@ def test_send_simple_email():
         handler = DsmtpdHandler(maildir)
         controller = Controller(
             handler,
-            hostname='127.0.0.1',
+            hostname="127.0.0.1",
             port=10026,
         )
 
@@ -55,10 +56,10 @@ def test_send_simple_email():
 
         try:
             # Send an email using smtplib
-            with smtplib.SMTP('127.0.0.1', 10026) as smtp:
-                sender = 'sender@example.com'
-                recipients = ['recipient@example.com']
-                message = 'Subject: Test Email\n\nThis is a test message.'
+            with smtplib.SMTP("127.0.0.1", 10026) as smtp:
+                sender = "sender@example.com"
+                recipients = ["recipient@example.com"]
+                message = "Subject: Test Email\n\nThis is a test message."
 
                 smtp.sendmail(sender, recipients, message)
 
@@ -71,8 +72,8 @@ def test_send_simple_email():
 
             # Verify email content
             email = mbox[list(mbox.keys())[0]]
-            assert email['Subject'] == 'Test Email'
-            assert 'This is a test message.' in email.get_payload()
+            assert email["Subject"] == "Test Email"
+            assert "This is a test message." in email.get_payload()
 
         finally:
             controller.stop()
@@ -87,7 +88,7 @@ def test_send_multipart_email():
         handler = DsmtpdHandler(maildir)
         controller = Controller(
             handler,
-            hostname='127.0.0.1',
+            hostname="127.0.0.1",
             port=10027,
         )
 
@@ -96,15 +97,15 @@ def test_send_multipart_email():
         try:
             # Create a multipart message
             msg = MIMEMultipart()
-            msg['From'] = 'test@example.com'
-            msg['To'] = 'recipient@example.com'
-            msg['Subject'] = 'Multipart Test'
+            msg["From"] = "test@example.com"
+            msg["To"] = "recipient@example.com"
+            msg["Subject"] = "Multipart Test"
 
-            body = 'This is the email body'
-            msg.attach(MIMEText(body, 'plain'))
+            body = "This is the email body"
+            msg.attach(MIMEText(body, "plain"))
 
             # Send the email
-            with smtplib.SMTP('127.0.0.1', 10027) as smtp:
+            with smtplib.SMTP("127.0.0.1", 10027) as smtp:
                 smtp.send_message(msg)
 
             time.sleep(0.1)
@@ -115,9 +116,9 @@ def test_send_multipart_email():
 
             # Verify email content
             email = mbox[list(mbox.keys())[0]]
-            assert email['Subject'] == 'Multipart Test'
-            assert email['From'] == 'test@example.com'
-            assert email['To'] == 'recipient@example.com'
+            assert email["Subject"] == "Multipart Test"
+            assert email["From"] == "test@example.com"
+            assert email["To"] == "recipient@example.com"
 
         finally:
             controller.stop()
@@ -132,7 +133,7 @@ def test_multiple_recipients():
         handler = DsmtpdHandler(maildir)
         controller = Controller(
             handler,
-            hostname='127.0.0.1',
+            hostname="127.0.0.1",
             port=10028,
         )
 
@@ -140,14 +141,14 @@ def test_multiple_recipients():
 
         try:
             # Send email to multiple recipients
-            with smtplib.SMTP('127.0.0.1', 10028) as smtp:
-                sender = 'sender@example.com'
+            with smtplib.SMTP("127.0.0.1", 10028) as smtp:
+                sender = "sender@example.com"
                 recipients = [
-                    'recipient1@example.com',
-                    'recipient2@example.com',
-                    'recipient3@example.com'
+                    "recipient1@example.com",
+                    "recipient2@example.com",
+                    "recipient3@example.com",
                 ]
-                message = 'Subject: Multiple Recipients Test\n\nTest message.'
+                message = "Subject: Multiple Recipients Test\n\nTest message."
 
                 smtp.sendmail(sender, recipients, message)
 
@@ -170,7 +171,7 @@ def test_multiple_emails():
         handler = DsmtpdHandler(maildir)
         controller = Controller(
             handler,
-            hostname='127.0.0.1',
+            hostname="127.0.0.1",
             port=10029,
         )
 
@@ -178,11 +179,11 @@ def test_multiple_emails():
 
         try:
             # Send multiple emails
-            with smtplib.SMTP('127.0.0.1', 10029) as smtp:
+            with smtplib.SMTP("127.0.0.1", 10029) as smtp:
                 for i in range(5):
-                    sender = f'sender{i}@example.com'
-                    recipients = [f'recipient{i}@example.com']
-                    message = f'Subject: Test Email {i}\n\nMessage number {i}.'
+                    sender = f"sender{i}@example.com"
+                    recipients = [f"recipient{i}@example.com"]
+                    message = f"Subject: Test Email {i}\n\nMessage number {i}."
                     smtp.sendmail(sender, recipients, message)
 
             time.sleep(0.2)
@@ -207,7 +208,7 @@ def test_server_with_custom_port():
 
         controller = Controller(
             handler,
-            hostname='127.0.0.1',
+            hostname="127.0.0.1",
             port=test_port,
         )
 
@@ -219,11 +220,11 @@ def test_server_with_custom_port():
             assert actual_port == test_port
 
             # Send a test email
-            with smtplib.SMTP('127.0.0.1', test_port) as smtp:
+            with smtplib.SMTP("127.0.0.1", test_port) as smtp:
                 smtp.sendmail(
-                    'test@example.com',
-                    ['dest@example.com'],
-                    'Subject: Port Test\n\nTesting custom port.'
+                    "test@example.com",
+                    ["dest@example.com"],
+                    "Subject: Port Test\n\nTesting custom port.",
                 )
 
             time.sleep(0.1)
@@ -246,7 +247,7 @@ def test_max_size_within_limit():
         # Set max size to 10KB
         controller = Controller(
             handler,
-            hostname='127.0.0.1',
+            hostname="127.0.0.1",
             port=10031,
             data_size_limit=10240,
         )
@@ -255,13 +256,13 @@ def test_max_size_within_limit():
 
         try:
             # Send a 2KB email (well under limit)
-            with smtplib.SMTP('127.0.0.1', 10031) as smtp:
-                sender = 'sender@example.com'
-                recipients = ['recipient@example.com']
+            with smtplib.SMTP("127.0.0.1", 10031) as smtp:
+                sender = "sender@example.com"
+                recipients = ["recipient@example.com"]
                 # Create ~2KB message with proper line breaks
-                lines = [f'This is line {i}' for i in range(40)]
-                body = '\n'.join(lines) * 2  # ~2KB
-                message = f'Subject: Size Test\n\n{body}'
+                lines = [f"This is line {i}" for i in range(40)]
+                body = "\n".join(lines) * 2  # ~2KB
+                message = f"Subject: Size Test\n\n{body}"
 
                 smtp.sendmail(sender, recipients, message)
 
@@ -285,7 +286,7 @@ def test_max_size_exceeded():
         # Set max size to 1KB
         controller = Controller(
             handler,
-            hostname='127.0.0.1',
+            hostname="127.0.0.1",
             port=10032,
             data_size_limit=1024,
         )
@@ -295,13 +296,13 @@ def test_max_size_exceeded():
         try:
             # Try to send a 5KB email (exceeds limit)
             email_rejected = False
-            with smtplib.SMTP('127.0.0.1', 10032) as smtp:
-                sender = 'sender@example.com'
-                recipients = ['recipient@example.com']
+            with smtplib.SMTP("127.0.0.1", 10032) as smtp:
+                sender = "sender@example.com"
+                recipients = ["recipient@example.com"]
                 # Create ~5KB message with proper line breaks
-                lines = [f'This is line {i}' for i in range(100)]
-                body = '\n'.join(lines) * 2  # ~5KB
-                message = f'Subject: Size Test\n\n{body}'
+                lines = [f"This is line {i}" for i in range(100)]
+                body = "\n".join(lines) * 2  # ~5KB
+                message = f"Subject: Size Test\n\n{body}"
 
                 try:
                     smtp.sendmail(sender, recipients, message)
