@@ -233,3 +233,89 @@ def test_server_with_custom_port():
 
         finally:
             controller.stop()
+
+
+def test_max_size_within_limit():
+    """Test that emails within max-size limit are accepted"""
+    with TemporaryDirectory() as tempdir:
+        maildir = f"{tempdir}/Maildir"
+        ensure_maildir(maildir)
+
+        handler = DsmtpdHandler(maildir)
+        # Set max size to 10KB
+        controller = Controller(
+            handler,
+            hostname='127.0.0.1',
+            port=10031,
+            data_size_limit=10240,
+        )
+
+        controller.start()
+
+        try:
+            # Send a 2KB email (well under limit)
+            with smtplib.SMTP('127.0.0.1', 10031) as smtp:
+                sender = 'sender@example.com'
+                recipients = ['recipient@example.com']
+                # Create ~2KB message with proper line breaks
+                lines = ['This is line {}'.format(i) for i in range(40)]
+                body = '\n'.join(lines) * 2  # ~2KB
+                message = f'Subject: Size Test\n\n{body}'
+
+                smtp.sendmail(sender, recipients, message)
+
+            time.sleep(0.1)
+
+            # Verify email was stored
+            mbox = mailbox.Maildir(maildir, create=False)
+            assert len(mbox) == 1
+
+        finally:
+            controller.stop()
+
+
+def test_max_size_exceeded():
+    """Test that emails exceeding max-size are rejected"""
+    with TemporaryDirectory() as tempdir:
+        maildir = f"{tempdir}/Maildir"
+        ensure_maildir(maildir)
+
+        handler = DsmtpdHandler(maildir)
+        # Set max size to 1KB
+        controller = Controller(
+            handler,
+            hostname='127.0.0.1',
+            port=10032,
+            data_size_limit=1024,
+        )
+
+        controller.start()
+
+        try:
+            # Try to send a 5KB email (exceeds limit)
+            email_rejected = False
+            with smtplib.SMTP('127.0.0.1', 10032) as smtp:
+                sender = 'sender@example.com'
+                recipients = ['recipient@example.com']
+                # Create ~5KB message with proper line breaks
+                lines = ['This is line {}'.format(i) for i in range(100)]
+                body = '\n'.join(lines) * 2  # ~5KB
+                message = f'Subject: Size Test\n\n{body}'
+
+                try:
+                    smtp.sendmail(sender, recipients, message)
+                except (smtplib.SMTPSenderRefused, smtplib.SMTPDataError) as e:
+                    # Email was rejected due to size (expected)
+                    # aiosmtpd rejects during MAIL FROM (SMTPSenderRefused)
+                    email_rejected = True
+                    assert e.smtp_code == 552
+
+            time.sleep(0.1)
+
+            # Verify email was NOT stored
+            mbox = mailbox.Maildir(maildir, create=False)
+            assert len(mbox) == 0
+            assert email_rejected, "Email should have been rejected due to size limit"
+
+        finally:
+            controller.stop()
