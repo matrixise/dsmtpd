@@ -10,6 +10,7 @@ Features:
 
 - Document SMTPUTF8 support (RFC 6531) - enabled by default via aiosmtpd (#32)
 - SMTPUTF8 allows UTF-8 email addresses, headers, and message content
+- Add ``--disable-smtputf8`` CLI option to disable SMTPUTF8 extension for legacy client compatibility (#34)
 
 Development improvements:
 

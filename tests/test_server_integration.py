@@ -372,3 +372,42 @@ def test_smtputf8_support():
 
         finally:
             controller.stop()
+
+
+def test_smtputf8_can_be_disabled():
+    """Test that SMTPUTF8 can be disabled via enable_SMTPUTF8 parameter"""
+    with TemporaryDirectory() as tempdir:
+        maildir = f"{tempdir}/Maildir"
+        ensure_maildir(maildir)
+
+        handler = DsmtpdHandler(maildir)
+        controller = Controller(
+            handler,
+            hostname="127.0.0.1",
+            port=10034,
+            enable_SMTPUTF8=False,
+        )
+
+        controller.start()
+
+        try:
+            # Verify SMTPUTF8 is NOT announced when disabled
+            with smtplib.SMTP("127.0.0.1", 10034) as smtp:
+                smtp.ehlo()
+                assert "smtputf8" not in smtp.esmtp_features
+
+                # Send a simple ASCII email (should work fine)
+                sender = "user@example.com"
+                recipients = ["recipient@example.com"]
+                message = b"Subject: ASCII Test\r\n\r\nThis is a simple ASCII message."
+
+                smtp.sendmail(sender, recipients, message)
+
+            time.sleep(0.1)
+
+            # Verify email was stored
+            mbox = mailbox.Maildir(maildir, create=False)
+            assert len(mbox) == 1
+
+        finally:
+            controller.stop()

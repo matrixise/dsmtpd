@@ -112,6 +112,11 @@ def parse_args():
         default=33554432,  # default of aiosmtpd
         type=int,
     )
+    parser.add_argument(
+        "--disable-smtputf8",
+        action="store_true",
+        help="Disable SMTPUTF8 extension (enabled by default)",
+    )
     parser.add_argument("--version", action="version", version=__version__)
 
     return parser.parse_args()
@@ -160,6 +165,7 @@ def main():
             hostname=opts.interface,
             port=opts.port,
             data_size_limit=opts.max_size,
+            enable_SMTPUTF8=not opts.disable_smtputf8,
         )
         controller.start()
         asyncio.get_event_loop().run_forever()
