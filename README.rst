@@ -35,11 +35,12 @@ Execute dsmtpd with the --help flag and you will get the usage of this command::
 
     dsmtpd --help
 
-There are three options:
+Available options:
 
 * -p You specify the port of dsmtpd (default is 1025)
 * -i You specify the network interface (default is loopback, 127.0.0.1)
 * -d You specify a Maildir directory to save the incoming emails
+* --disable-smtputf8 Disable SMTPUTF8 extension (enabled by default)
 
 Use it
 ------
@@ -68,6 +69,14 @@ Example usage with UTF-8 email addresses::
     swaks --from user@example.com --to 用户@例え.jp --server localhost --port 1025
 
 This functionality is provided by the underlying aiosmtpd library and works transparently with all standard SMTP clients that support the SMTPUTF8 extension.
+
+**Disabling SMTPUTF8**
+
+If you need to test compatibility with legacy SMTP clients or reproduce encoding issues, you can disable SMTPUTF8::
+
+    dsmtpd --disable-smtputf8
+
+When disabled, the server will not advertise SMTPUTF8 support and will only accept ASCII email addresses and content.
 
 Exit Codes
 ----------
