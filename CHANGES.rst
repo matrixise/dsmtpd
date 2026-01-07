@@ -8,10 +8,16 @@ Version 1.2 (unreleased)
 
 Features:
 
+- Document SMTPUTF8 support (RFC 6531) - enabled by default via aiosmtpd (#32)
+- SMTPUTF8 allows UTF-8 email addresses, headers, and message content
 - Add ``--disable-smtputf8`` CLI option to disable SMTPUTF8 extension for legacy client compatibility (#34)
 
 Development improvements:
 
+- Add test coverage reporting with pytest-cov (#29)
+- Add code quality tools: ruff (linting/formatting) and mypy (type checking) (#29)
+- Add pre-commit hooks with prek for automated code quality checks (#31)
+- New make targets: ``lint``, ``lint-fix``, ``format``, ``typecheck`` (#29)
 - Enhanced Makefile with automatic virtual environment management
 - Add smart dependency tracking to avoid unnecessary reinstallations during development
 - New make targets: ``install-dev``, ``clean``, ``clean-build``, ``clean-venv``
@@ -19,8 +25,11 @@ Development improvements:
 - Significantly faster repeated test runs with timestamp-based dependency tracking
 - Add comprehensive tests for the debugging SMTP server (#8)
 - New integration tests for email reception, storage, and multipart email handling
+- Add tests for ``--version`` flag and ``--max-size`` option (#29)
+- Add test for SMTPUTF8 support verification (#32)
 - Add support for Python 3.14 (#25)
 - Replace deprecated license classifiers with SPDX license expression (#24)
+- GitHub Actions workflow now includes linting and type checking jobs (#29)
 
 Version 1.1
 -----------
