@@ -2,7 +2,8 @@ version: '3'
 
 vars:
   PYTHON: python3
-  RUFF: ruff
+  VENV_PYTHON: .venv/bin/python3
+  VENV_RUFF: .venv/bin/ruff
 
 tasks:
   # Setup tasks
@@ -17,24 +18,25 @@ tasks:
     deps: [setup-venv]
     cmds:
       - .venv/bin/pip install --upgrade pip
-      - .venv/bin/pip install -e ".[dev]"
+      - .venv/bin/pip install -r requirements-dev.txt
+      - .venv/bin/pip install -e .
 
   # Development tasks
   format:
     desc: Format code with ruff
     cmds:
-      - "{{.RUFF}} format ."
-      - "{{.RUFF}} check --fix ."
+      - "{{.VENV_RUFF}} format ."
+      - "{{.VENV_RUFF}} check --fix ."
 
   lint:
     desc: Run linting checks
     cmds:
-      - "{{.RUFF}} check ."
+      - "{{.VENV_RUFF}} check ."
 
   test:
     desc: Run tests
     cmds:
-      - "{{.PYTHON}} -m pytest tests/ -v"
+      - "{{.VENV_PYTHON}} -m pytest tests/ -v"
 
   # Git and release management
   status:
@@ -198,12 +200,12 @@ tasks:
     desc: Build package
     deps: [clean]
     cmds:
-      - "{{.PYTHON}} -m build"
+      - "{{.VENV_PYTHON}} -m build"
 
   install-dev:
     desc: Install in development mode
     cmds:
-      - "{{.PYTHON}} -m pip install -e ."
+      - "{{.VENV_PYTHON}} -m pip install -e ."
 
   # Quick release workflows
   patch-release:
