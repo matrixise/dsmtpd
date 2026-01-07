@@ -1,8 +1,8 @@
 import sys
-from unittest import mock
 from unittest.mock import patch
 
 from dsmtpd._dsmtpd import parse_args
+
 
 def test_directory():
     args = ["dsmtpd", "-d", "maildir"]

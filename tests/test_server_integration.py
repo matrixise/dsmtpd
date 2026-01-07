@@ -1,14 +1,15 @@
 """
 Integration tests for the SMTP server
 """
-from tempfile import TemporaryDirectory
+import mailbox
 import smtplib
 import time
-import mailbox
-from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from tempfile import TemporaryDirectory
 
 from aiosmtpd.controller import Controller
+
 from dsmtpd._dsmtpd import DsmtpdHandler, ensure_maildir
 
 
@@ -258,7 +259,7 @@ def test_max_size_within_limit():
                 sender = 'sender@example.com'
                 recipients = ['recipient@example.com']
                 # Create ~2KB message with proper line breaks
-                lines = ['This is line {}'.format(i) for i in range(40)]
+                lines = [f'This is line {i}' for i in range(40)]
                 body = '\n'.join(lines) * 2  # ~2KB
                 message = f'Subject: Size Test\n\n{body}'
 
@@ -298,7 +299,7 @@ def test_max_size_exceeded():
                 sender = 'sender@example.com'
                 recipients = ['recipient@example.com']
                 # Create ~5KB message with proper line breaks
-                lines = ['This is line {}'.format(i) for i in range(100)]
+                lines = [f'This is line {i}' for i in range(100)]
                 body = '\n'.join(lines) * 2  # ~5KB
                 message = f'Subject: Size Test\n\n{body}'
 
