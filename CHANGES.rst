@@ -13,6 +13,8 @@ Development improvements:
 - New make targets: ``install-dev``, ``clean``, ``clean-build``, ``clean-venv``
 - Makefile now uses Python from asdf/mise for consistent development environments
 - Significantly faster repeated test runs with timestamp-based dependency tracking
+- Add comprehensive tests for the debugging SMTP server (#8)
+- New integration tests for email reception, storage, and multipart email handling
 
 Version 1.1
 -----------

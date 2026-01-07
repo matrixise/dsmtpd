@@ -1,6 +1,10 @@
 dsmptd: A debugger SMTP server for Humans
 =========================================
 
+.. image:: https://github.com/matrixise/dsmtpd/workflows/Tests/badge.svg
+   :target: https://github.com/matrixise/dsmtpd/actions/workflows/tests.yml
+   :alt: Tests Status
+
 dsmtpd is a small tool to help the developer without an smtp server
 
 Usage
