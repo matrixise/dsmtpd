@@ -3,8 +3,10 @@ dsmtpd Changelog
 
 Here you can see the full list of changes between each dsmtpd release.
 
-Version 1.2 (unreleased)
--------------------------
+Version 1.2.0
+-------------
+
+Released on January 7th 2026.
 
 Features:
 

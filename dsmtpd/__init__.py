@@ -7,6 +7,6 @@ dsmtpd
 """
 
 __name__ = "dsmtpd"
-__version__ = "1.1"
+__version__ = "1.2.0"
 __author__ = "Stephane Wirtel"
 __author_email__ = "stephane@wirtel.be"
