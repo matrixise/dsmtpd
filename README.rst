@@ -150,9 +150,22 @@ This creates a ``.venv`` virtual environment and installs all development depend
 
 **Available Make Targets**
 
+Development Workflow:
+
 * ``make install-dev`` - Set up development environment (creates venv and installs dependencies)
 * ``make test`` - Run tests with pytest (automatically installs dependencies if needed)
+* ``make lint`` - Check code quality with ruff linter
+* ``make lint-fix`` - Auto-fix linting issues and format code with ruff
+* ``make format`` - Format code with ruff format
+* ``make typecheck`` - Run mypy type checking
+
+Build and Release:
+
 * ``make build`` - Build distribution packages
+* ``make check-dist`` - Verify distribution package integrity
+
+Cleanup:
+
 * ``make clean`` - Remove all build artifacts and virtual environment
 * ``make clean-build`` - Remove only build artifacts (dist/, build/)
 * ``make clean-venv`` - Remove only the virtual environment
@@ -195,6 +208,7 @@ You can also run quality checks manually::
 
     make lint        # Check code quality
     make lint-fix    # Auto-fix linting issues
+    make format      # Format code
     make typecheck   # Run mypy type checking
 
 The pre-commit hooks ensure code quality before commits, catching issues early and
