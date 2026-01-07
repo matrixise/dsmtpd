@@ -94,7 +94,7 @@ This creates a ``.venv`` virtual environment and installs all development depend
 * ``make test`` - Run tests with pytest (automatically installs dependencies if needed)
 * ``make build`` - Build distribution packages
 * ``make clean`` - Remove all build artifacts and virtual environment
-* ``make clean-build`` - Remove only build artifacts (dist/, build/, *.egg-info)
+* ``make clean-build`` - Remove only build artifacts (dist/, build/)
 * ``make clean-venv`` - Remove only the virtual environment
 
 **Workflow Tips**
