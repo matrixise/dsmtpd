@@ -214,5 +214,67 @@ You can also run quality checks manually::
 The pre-commit hooks ensure code quality before commits, catching issues early and
 maintaining consistent code standards across all contributions.
 
+Releasing
+---------
+
+This section is for maintainers cutting a new release. The publication pipeline
+is automated via the ``publish`` GitHub Actions workflow and triggered by
+pushing a git tag prefixed with ``v``.
+
+**Versioning policy**
+
+The project follows `Semantic Versioning <https://semver.org/>`_:
+
+* ``PATCH`` (e.g. 1.2.0 → 1.2.1) for bug fixes and internal/build-only changes
+  that are invisible to users (e.g. dropping unnecessary build dependencies).
+* ``MINOR`` (e.g. 1.2.0 → 1.3.0) for new, backward-compatible features.
+* ``MAJOR`` (e.g. 1.2.0 → 2.0.0) for breaking changes.
+
+**Manual steps**
+
+1. Bump the version in ``dsmtpd/__init__.py``::
+
+       __version__ = "X.Y.Z"
+
+   This is the single source of truth: ``setup.cfg`` reads it via
+   ``attr: dsmtpd.__version__``.
+
+2. Add an entry at the top of ``CHANGES.rst``::
+
+       Version X.Y.Z
+       -------------
+
+       Released on YYYY-MM-DD.
+
+       - Short summary of the change (#PR).
+
+3. Optionally validate the build locally::
+
+       make build
+       make check-dist
+
+4. Commit and push to ``main``::
+
+       git add dsmtpd/__init__.py CHANGES.rst
+       git commit -m "Release version X.Y.Z"
+       git push origin main
+
+5. Tag the release and push the tag::
+
+       git tag vX.Y.Z
+       git push origin vX.Y.Z
+
+**Automated steps (GitHub Actions)**
+
+Once the ``vX.Y.Z`` tag is pushed, the ``publish`` workflow will:
+
+* Run the test matrix on Python 3.10 → 3.14.
+* Verify that ``dsmtpd.__version__`` matches the tag.
+* Build the package (``python -m build``) and validate it with ``twine check``.
+* Publish to TestPyPI for pre-release validation.
+* Publish to PyPI (skipped automatically for tags containing pre-release
+  suffixes such as ``-rc1``).
+* Create the GitHub Release with auto-generated release notes.
+
 
 Copyright 2013 (c) by Stephane Wirtel
