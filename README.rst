@@ -217,9 +217,8 @@ maintaining consistent code standards across all contributions.
 Releasing
 ---------
 
-This section is for maintainers cutting a new release. The publication pipeline
-is automated via the ``publish`` GitHub Actions workflow and triggered by
-pushing a git tag prefixed with ``v``.
+The release process is automated end-to-end via the ``Release`` and
+``Publish to PyPI`` GitHub Actions workflows.
 
 **Versioning policy**
 
@@ -230,51 +229,52 @@ The project follows `Semantic Versioning <https://semver.org/>`_:
 * ``MINOR`` (e.g. 1.2.0 → 1.3.0) for new, backward-compatible features.
 * ``MAJOR`` (e.g. 1.2.0 → 2.0.0) for breaking changes.
 
-**Manual steps**
+**Maintaining the changelog**
 
-1. Bump the version in ``dsmtpd/__init__.py``::
+Add a bullet to the ``Unreleased`` section at the top of ``CHANGES.rst``
+whenever a PR worth mentioning to users is merged. The release workflow will
+promote this section to ``Version X.Y.Z`` automatically when you cut the
+release.
 
-       __version__ = "X.Y.Z"
+**Cutting a release**
 
-   This is the single source of truth: ``setup.cfg`` reads it via
-   ``attr: dsmtpd.__version__``.
+1. Make sure ``CHANGES.rst``'s ``Unreleased`` section lists the changes for
+   this release.
+2. Go to `Actions → Release <https://github.com/matrixise/dsmtpd/actions/workflows/release.yml>`_,
+   click *Run workflow*, choose ``patch`` / ``minor`` / ``major``, and confirm.
 
-2. Add an entry at the top of ``CHANGES.rst``::
+The ``Release`` workflow will:
 
-       Version X.Y.Z
-       -------------
+* compute the new version from ``dsmtpd/__init__.py`` and the chosen part,
+* update ``dsmtpd/__init__.py`` and promote the ``Unreleased`` section of
+  ``CHANGES.rst`` to ``Version X.Y.Z`` dated today (ISO format),
+* sanity-check the build (``python -m build`` + ``twine check``),
+* commit ``Release version X.Y.Z`` to ``main``, create the tag ``vX.Y.Z``,
+  push both,
+* trigger the ``Publish to PyPI`` workflow on the new tag.
 
-       Released on YYYY-MM-DD.
+The ``Publish to PyPI`` workflow then runs the test matrix on the tagged
+commit, builds the package, uploads to TestPyPI, uploads to PyPI (skipped
+automatically for tags containing pre-release suffixes such as ``-rc1``), and
+creates the GitHub Release with auto-generated notes.
 
-       - Short summary of the change (#PR).
+**Local dry run**
 
-3. Optionally validate the build locally::
+You can preview what the bump would do without committing or pushing
+anything::
 
-       make build
-       make check-dist
+    make bump PART=patch
+    git diff
+    # then undo if you only wanted to preview:
+    git checkout -- dsmtpd/__init__.py CHANGES.rst
 
-4. Commit and push to ``main``::
+**Manual fallback**
 
-       git add dsmtpd/__init__.py CHANGES.rst
-       git commit -m "Release version X.Y.Z"
-       git push origin main
-
-5. Tag the release and push the tag::
-
-       git tag vX.Y.Z
-       git push origin vX.Y.Z
-
-**Automated steps (GitHub Actions)**
-
-Once the ``vX.Y.Z`` tag is pushed, the ``publish`` workflow will:
-
-* Run the test matrix on Python 3.10 → 3.14.
-* Verify that ``dsmtpd.__version__`` matches the tag.
-* Build the package (``python -m build``) and validate it with ``twine check``.
-* Publish to TestPyPI for pre-release validation.
-* Publish to PyPI (skipped automatically for tags containing pre-release
-  suffixes such as ``-rc1``).
-* Create the GitHub Release with auto-generated release notes.
+If GitHub Actions is unavailable, the manual recipe still works: edit
+``dsmtpd/__init__.py`` and ``CHANGES.rst`` yourself (or run
+``make bump PART=...`` locally), commit as ``Release version X.Y.Z``, then
+``git push origin main && git tag vX.Y.Z && git push origin vX.Y.Z``.
+``Publish to PyPI`` will pick up the tag.
 
 
 Copyright 2013 (c) by Stephane Wirtel

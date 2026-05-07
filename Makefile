@@ -1,4 +1,4 @@
-.PHONY: venv install-dev build check-dist upload test lint lint-fix format typecheck clean-build clean-venv clean
+.PHONY: venv install-dev build check-dist upload test lint lint-fix format typecheck bump clean-build clean-venv clean
 
 PYTHON := python3
 VENV := .venv
@@ -45,18 +45,23 @@ test: $(INSTALL_TIMESTAMP)
 	$(VENV)/bin/pytest
 
 lint: $(INSTALL_TIMESTAMP)
-	$(VENV)/bin/ruff check dsmtpd/ tests/
-	$(VENV)/bin/ruff format --check dsmtpd/ tests/
+	$(VENV)/bin/ruff check dsmtpd/ tests/ scripts/
+	$(VENV)/bin/ruff format --check dsmtpd/ tests/ scripts/
 
 lint-fix: $(INSTALL_TIMESTAMP)
-	$(VENV)/bin/ruff check --fix dsmtpd/ tests/
-	$(VENV)/bin/ruff format dsmtpd/ tests/
+	$(VENV)/bin/ruff check --fix dsmtpd/ tests/ scripts/
+	$(VENV)/bin/ruff format dsmtpd/ tests/ scripts/
 
 format: $(INSTALL_TIMESTAMP)
-	$(VENV)/bin/ruff format dsmtpd/ tests/
+	$(VENV)/bin/ruff format dsmtpd/ tests/ scripts/
 
 typecheck: $(INSTALL_TIMESTAMP)
 	$(VENV)/bin/mypy dsmtpd/
+
+# Bump version and promote CHANGES.rst's Unreleased section.
+# Usage: make bump PART=patch  (or minor / major)
+bump: $(INSTALL_TIMESTAMP)
+	@$(VENV_PYTHON) scripts/release.py $(PART)
 
 # Clean build artifacts
 clean-build:
