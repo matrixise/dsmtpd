@@ -6,12 +6,7 @@ Here you can see the full list of changes between each dsmtpd release.
 Unreleased
 ----------
 
-Testing improvements:
-
-- Fix SMTPUTF8 test to actually test non-ASCII email addresses (#40)
-- Test now uses real UTF-8 addresses (expéditeur@société.fr, destinataire@例え.jp)
-- Properly validates that SMTPUTF8 (RFC 6531) works with non-ASCII email addresses
-- Previous test only checked UTF-8 content in message body with ASCII addresses
+- Fix SMTPUTF8 test to actually exercise non-ASCII email addresses (RFC 6531) (#40)
 
 Version 1.2.0
 -------------
