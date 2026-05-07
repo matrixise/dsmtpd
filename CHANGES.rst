@@ -3,6 +3,11 @@ dsmtpd Changelog
 
 Here you can see the full list of changes between each dsmtpd release.
 
+Unreleased
+----------
+
+- Fix SMTPUTF8 test to actually exercise non-ASCII email addresses (RFC 6531) (#40)
+
 Version 1.2.0
 -------------
 

@@ -339,23 +339,24 @@ def test_smtputf8_support():
         controller.start()
 
         try:
-            # Send email with UTF-8 characters in addresses
+            # Send email with UTF-8 characters in email addresses (RFC 6531)
             with smtplib.SMTP("127.0.0.1", 10033) as smtp:
                 # Verify SMTPUTF8 is announced in EHLO response
                 smtp.ehlo()
                 assert "smtputf8" in smtp.esmtp_features
 
-                sender = "user@example.com"
-                # Use UTF-8 recipient (using valid ASCII for actual test)
-                # Real UTF-8 addresses would require SMTPUTF8 MAIL FROM option
-                recipients = ["recipient@example.com"]
-                # Encode message as UTF-8 bytes to send Unicode content
-                message = (
-                    b"Subject: UTF-8 Test\r\n\r\n"
-                    b"Test message with UTF-8: \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e"
-                )
+                # Use non-ASCII characters in email addresses
+                # This is what SMTPUTF8 (RFC 6531) is actually for
+                from email.message import EmailMessage
 
-                smtp.sendmail(sender, recipients, message)
+                msg = EmailMessage()
+                msg["From"] = "expéditeur@société.fr"
+                msg["To"] = "destinataire@例え.jp"
+                msg["Subject"] = "Test SMTPUTF8"
+                msg.set_content("Test message with UTF-8 content: 日本語")
+
+                # send_message automatically uses SMTPUTF8 when needed
+                smtp.send_message(msg)
 
             time.sleep(0.1)
 
@@ -363,12 +364,31 @@ def test_smtputf8_support():
             mbox = mailbox.Maildir(maildir, create=False)
             assert len(mbox) == 1
 
-            # Verify UTF-8 content
+            # Verify UTF-8 addresses and content are preserved
             email = mbox[list(mbox.keys())[0]]
-            assert "UTF-8 Test" in email["Subject"]
+            assert email["Subject"] == "Test SMTPUTF8"
+
+            # Verify UTF-8 addresses in SMTP envelope headers (X-MailFrom, X-RcptTo)
+            # These are added by dsmtpd and contain the actual SMTP envelope addresses
+            # which properly support UTF-8 with SMTPUTF8 (RFC 6531)
+            from email.header import decode_header
+
+            # Decode MIME-encoded headers
+            def decode_mime_header(header_value):
+                decoded_parts = decode_header(str(header_value))
+                return "".join(
+                    part.decode(encoding or "utf-8") if isinstance(part, bytes) else part
+                    for part, encoding in decoded_parts
+                )
+
+            mail_from = decode_mime_header(email["X-MailFrom"])
+            rcpt_to = decode_mime_header(email["X-RcptTo"])
+            assert "expéditeur" in mail_from and "société" in mail_from
+            assert "destinataire" in rcpt_to and "例え" in rcpt_to
+
             # Verify UTF-8 content is preserved in the stored email
-            payload = email.get_payload()
-            assert "UTF-8" in payload or "日本語" in payload
+            payload = email.get_payload(decode=True).decode("utf-8")
+            assert "日本語" in payload
 
         finally:
             controller.stop()
