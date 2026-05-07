@@ -3,6 +3,11 @@ dsmtpd Changelog
 
 Here you can see the full list of changes between each dsmtpd release.
 
+Unreleased
+----------
+
+- Automate release cutting via the ``Release`` GitHub Actions workflow (#45)
+
 Version 1.2.1
 -------------
 

@@ -1,0 +1,131 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_part:
+        description: "Which version part to bump"
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+  actions: write
+
+# Serialize releases. Two simultaneous Release runs would race on the bump,
+# the commit and the tag push. We do not cancel an in-flight release because
+# its intermediate state (tag pushed, publish triggered) cannot be safely
+# abandoned mid-way.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install dev dependencies (used by the test sanity-check below)
+        run: make install-dev
+
+      - name: Bump version and promote CHANGES
+        id: bump
+        run: |
+          NEW_VERSION=$(python scripts/release.py "${{ inputs.version_part }}")
+          echo "new_version=$NEW_VERSION" >> "$GITHUB_OUTPUT"
+          echo "Bumped to $NEW_VERSION"
+
+      - name: Show changes
+        run: |
+          grep '^__version__' dsmtpd/__init__.py
+          head -20 CHANGES.rst
+
+      # Run the full test suite against the bumped tree before tagging — this
+      # is the last reversible point, so we want to fail loudly here rather
+      # than after publish.yml has already started uploading to TestPyPI.
+      - name: Sanity-check — run tests
+        run: make test
+
+      - name: Sanity-check — build and twine check
+        run: |
+          pip install build twine
+          python -m build
+          twine check dist/*
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      # If main has moved between checkout and now, refuse to push our local
+      # commit on top — the tested tree is no longer what we'd be tagging.
+      # Better to fail than to silently rebase onto unknown work.
+      - name: Verify main has not moved during the run
+        run: |
+          git fetch origin main
+          if [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/main)" ]; then
+            echo "::error::origin/main moved during the release run; aborting before commit"
+            echo "Local HEAD : $(git rev-parse HEAD)"
+            echo "Origin main: $(git rev-parse origin/main)"
+            exit 1
+          fi
+
+      - name: Commit, tag, atomic push
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+        run: |
+          NOTES=$(python scripts/release.py notes "$NEW_VERSION")
+          git add dsmtpd/__init__.py CHANGES.rst
+          git commit -m "Release version $NEW_VERSION" -m "$NOTES"
+          git tag -a "v$NEW_VERSION" -m "Release version $NEW_VERSION" -m "$NOTES"
+          # --atomic ensures both the branch update and the tag creation are
+          # accepted as a single transaction. Without it, a successful main
+          # push followed by a tag-push failure would leave the release
+          # commit on main without a tag, and publish.yml would never fire.
+          git push --atomic origin main "v$NEW_VERSION"
+
+      # Triggering publish via workflow_dispatch (rather than relying on the
+      # tag-push event) is required: tag pushes performed with the default
+      # GITHUB_TOKEN do not trigger other workflows. We then watch the
+      # publish run so this job's status reflects the end-to-end outcome —
+      # if publish.yml fails, this job fails too, and the user is paged via
+      # the normal Actions failure notification.
+      - name: Trigger Publish workflow
+        id: trigger
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run publish.yml --ref "v$NEW_VERSION"
+          # Give GitHub time to register the new run before we look it up.
+          sleep 15
+          RUN_ID=$(gh run list \
+            --workflow=publish.yml \
+            --branch "v$NEW_VERSION" \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId // empty')
+          if [ -z "$RUN_ID" ]; then
+            echo "::error::Could not find a publish.yml run for tag v$NEW_VERSION"
+            exit 1
+          fi
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "Triggered publish.yml run $RUN_ID — see https://github.com/${{ github.repository }}/actions/runs/$RUN_ID"
+
+      - name: Wait for Publish workflow to finish
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh run watch "${{ steps.trigger.outputs.run_id }}" --exit-status
