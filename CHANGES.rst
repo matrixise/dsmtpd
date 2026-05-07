@@ -3,10 +3,15 @@ dsmtpd Changelog
 
 Here you can see the full list of changes between each dsmtpd release.
 
-Unreleased
-----------
+Version 1.2.1
+-------------
 
+Released on May 7th 2026.
+
+- Drop ``aiosmtpd`` and ``wheel`` from direct build dependencies (#41)
 - Fix SMTPUTF8 test to actually exercise non-ASCII email addresses (RFC 6531) (#40)
+- Document release process in README (#42)
+- Add Sviatoslav Sydorenko to AUTHORS (#43)
 
 Version 1.2.0
 -------------
