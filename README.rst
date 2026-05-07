@@ -238,25 +238,34 @@ release.
 
 **Cutting a release**
 
-1. Make sure ``CHANGES.rst``'s ``Unreleased`` section lists the changes for
-   this release.
+1. Make sure ``CHANGES.rst``'s ``Unreleased`` section lists at least one
+   bullet for this release. The workflow refuses to release with an empty
+   ``Unreleased`` section.
 2. Go to `Actions → Release <https://github.com/matrixise/dsmtpd/actions/workflows/release.yml>`_,
    click *Run workflow*, choose ``patch`` / ``minor`` / ``major``, and confirm.
 
 The ``Release`` workflow will:
 
 * compute the new version from ``dsmtpd/__init__.py`` and the chosen part,
-* update ``dsmtpd/__init__.py`` and promote the ``Unreleased`` section of
-  ``CHANGES.rst`` to ``Version X.Y.Z`` dated today (ISO format),
-* sanity-check the build (``python -m build`` + ``twine check``),
-* commit ``Release version X.Y.Z`` to ``main``, create the tag ``vX.Y.Z``,
-  push both,
-* trigger the ``Publish to PyPI`` workflow on the new tag.
+* promote the ``Unreleased`` section of ``CHANGES.rst`` to ``Version X.Y.Z``
+  dated today (ISO format) and update ``dsmtpd/__init__.py``,
+* run the full test suite (``make test``) and ``python -m build`` +
+  ``twine check`` against the bumped tree — this is the last reversible
+  point, so failure here aborts before any tag is pushed,
+* refuse to push if ``main`` has moved during the run,
+* commit ``Release version X.Y.Z`` (with the changelog bullets in the body)
+  to ``main`` and create the tag ``vX.Y.Z``, then push both atomically,
+* trigger the ``Publish to PyPI`` workflow on the new tag and **wait for it
+  to finish** — if the publish job fails, the release job fails too, so a
+  green release run means the package is on PyPI.
 
-The ``Publish to PyPI`` workflow then runs the test matrix on the tagged
-commit, builds the package, uploads to TestPyPI, uploads to PyPI (skipped
+The ``Publish to PyPI`` workflow runs the test matrix on the tagged commit,
+builds the package, uploads to TestPyPI, uploads to PyPI (skipped
 automatically for tags containing pre-release suffixes such as ``-rc1``), and
 creates the GitHub Release with auto-generated notes.
+
+Two ``Release`` runs cannot execute in parallel — they are serialized via
+a ``concurrency`` group.
 
 **Local dry run**
 

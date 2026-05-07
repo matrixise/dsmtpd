@@ -56,12 +56,13 @@ format: $(INSTALL_TIMESTAMP)
 	$(VENV)/bin/ruff format dsmtpd/ tests/ scripts/
 
 typecheck: $(INSTALL_TIMESTAMP)
-	$(VENV)/bin/mypy dsmtpd/
+	$(VENV)/bin/mypy dsmtpd/ scripts/
 
 # Bump version and promote CHANGES.rst's Unreleased section.
 # Usage: make bump PART=patch  (or minor / major)
-bump: $(INSTALL_TIMESTAMP)
-	@$(VENV_PYTHON) scripts/release.py $(PART)
+# Stdlib only — no dependency on the venv.
+bump:
+	@$(PYTHON) scripts/release.py $(PART)
 
 # Clean build artifacts
 clean-build:
